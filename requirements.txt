@@ -2,6 +2,6 @@ blessings==1.7
 inquirer==2.5.1
 Jinja2==2.10
 MarkupSafe==1.1.0
-pkg-resources==0.0.0
+# pkg-resources==0.0.0
 readchar==2.0.1
 six==1.12.0
