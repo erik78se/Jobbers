@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
-from jobbers import jobber
+# -*- coding: utf-8 -*-
 
-print(jobber.process())
+#
+# This is an example script
+# Its automatically created by the "setup.py"
+# and should only be used as a reference.
+#
+
+import re
+import sys
+
+from jobbers.jobber import process
+
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+    sys.exit(process())
+
