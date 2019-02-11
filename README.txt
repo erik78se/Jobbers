@@ -17,4 +17,14 @@ python echo.py
 The build package ends up in "dist" directory
 ```bash
 python setup.py sdist
+python setup.py bdist_wheel
 ```
+Packages (tar.gz)  are built in "dist/"
+
+## Build snap
+```bash
+# (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
+# (if kvm) export SNAPCRAFT_BUILD_ENVIRONMENT=host
+
+snapcraft clean
+snapcraft
