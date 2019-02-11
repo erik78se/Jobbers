@@ -34,6 +34,6 @@ snapcraft clean
 snapcraft
 
 ## Install snap (devmode)
-sudo snap install --devmode jobber_0.1.snap
+sudo snap install --devmode jobbers_0.1.snap
 
-## application will be available as "jobber"
+## application will be available as "jobber.<application>"
