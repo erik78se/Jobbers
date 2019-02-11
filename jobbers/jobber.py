@@ -1,8 +1,14 @@
 import inquirer  # https://pypi.org/project/inquirer/
 import jinja2    # http://jinja.pocoo.org/docs/2.10/
 
+#
+# Example implementation of inquirer in combination with jinja2
+#
+
 def process():
-    """ Returns the processed workflow as a string """
+    """ Returns a rendered template, 
+    based on questions from inquirer
+    as a string to stdout """
 
     ### Ask questions
     questions = [
