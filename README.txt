@@ -21,6 +21,11 @@ python setup.py bdist_wheel
 ```
 Packages (tar.gz)  are built in "dist/"
 
+## Install local package with pip
+```bash
+pip install dist/Jobber-0.1.dev0-py3-none-any.whl
+```
+
 ## Build snap
 ```bash
 # (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
