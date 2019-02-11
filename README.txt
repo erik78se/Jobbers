@@ -30,6 +30,10 @@ pip install dist/Jobber-0.1.dev0-py3-none-any.whl
 ```bash
 # (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
 # (if kvm) export SNAPCRAFT_BUILD_ENVIRONMENT=host
-
 snapcraft clean
 snapcraft
+
+## Install snap (devmode)
+sudo snap install jobber_0.1.snap
+
+## application will be available as "jobber"

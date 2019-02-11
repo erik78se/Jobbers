@@ -7,6 +7,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     license='GPLv3',
     long_description=open('README.txt').read(),
-    scripts=['bin/somescript'],
+    scripts=['bin/jobber'],
     include_package_data = True
 )

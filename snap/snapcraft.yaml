@@ -17,4 +17,5 @@ parts:
 
 apps:
     jobber:
-      command: somescript
+      command: jobber
+      plugs: [home]
