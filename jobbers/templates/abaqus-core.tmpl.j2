@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+#SBATCH -J Foo
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -p partition1
+#SBATCH -A NissesAccount
+#SBATCH --exclusive
 
-## Start by transferring the input to wherever the job is run
-### TODO: BUG: SBCAST ignored by SLURM if used like this.
-##SBCAST {{ answers.inputfile }} $SLURM_REMOTE_DIR
-#SBATCH -J Trivial
 import os
 import sys
 import subprocess
@@ -17,8 +19,7 @@ from pwd import getpwnam
 print(os.getenv("SLURM_JOB_ACCOUNT"))
 print(os.getenv("SLURM_JOB_ID"))
 print(os.getenv("SLURM_REMOTE_DIR"))
-(a,b) = subprocess.Popen(["sbcast", "c2.inp", "/tmp/c2_2.inp"],
-                 stdout=subprocess.STDOUT,)).communicate()
+(a,b) = subprocess.Popen(["sbcast", "c2.inp", "/tmp/c2_2.inp"]).communicate()
 
 # jobname=os.getenv("SLURM_JOB_NAME")
 # slurm_debug = os.getenv("SLURM_DEBUG")
@@ -32,14 +33,12 @@ if 'SLURM_GTIDS' in os.environ:
 shared_dir = "/tmp/scratch/{}/{}".format(os.getenv("USER"),os.getenv("SLURM_JOB_ID"))
 os.makedirs(shared_dir)
 
-(stdoutdata, stderrdata) = subprocess.Popen(["file", "/tmp/c2.inp" ],
-                                            stdout=subprocess.STDOUT,).communicate()
+(stdoutdata, stderrdata) = subprocess.Popen(["file", "/tmp/c2_2.inp" ]).communicate()
 
 #(stdoutdata, stderrdata) = subprocess.Popen(["abq2017.1",
 #                                             "job=c2",
 #                                             "interactive",
-#                                             "cpus=1"],
-#                                            stdout=subprocess.STDOUT,).communicate()
+#                                             "cpus=1"]).communicate()
 
 print("From run:")
 print(stdoutdata)
