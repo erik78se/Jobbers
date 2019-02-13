@@ -19,4 +19,6 @@ apps:
     jobber:
       command: jobber
       plugs: [home]
-
+    abaqus:
+      command: abaqus
+      plugs: [home]

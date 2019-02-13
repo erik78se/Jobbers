@@ -11,6 +11,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'jobber=jobbers.jobber:process',
+            'abaqus=jobbers.abaqus:process',
         ],
     },
     include_package_data = True
