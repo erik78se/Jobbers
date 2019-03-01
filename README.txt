@@ -9,6 +9,11 @@ pip install --upgrade pip wheel
 pip install -r requirements.txt
 ```
 
+## Local development
+source venv/bin/activate
+pip --timeout 2 install --editable .
+jobber
+
 ## Build pip package (wheel)
 The buildt whl package ends up in "dist" directory
 ```bash
