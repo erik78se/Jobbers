@@ -22,3 +22,6 @@ apps:
     abaqus:
       command: abaqus
       plugs: [home]
+    femfat:
+      command: femfat
+      plugs: [home]
