@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#SBATCH -J {{ jobname }}
+##SBATCH -N {{ nodes }}
+##SBATCH -n {{ node_cores }}
+#SBATCH -n 1
+#SBATCH -p partition1
+##SBATCH -A {{ account }}
+{{ start }}
+
+export PATH=/share/apps/femfat/Linux/femfat{{ version }}/bin:$PATH
+
+# unset SLURM_GTIDS (Seems abaqus crashes when this is set)
+unset SLURM_GTIDS
+
+export MAGNAECS_LICENSE_PATH="6300@licserv0003.scania.com:6300@licserv0002.scania.com:6300@licserv0001.scania.com"
+
+# SHARED DIR (All nodes sees this data)
+#mkdir /cluster/sesonas13/${USER}/${jobname}
+
+# Get availabe port
+read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+while :
+do
+        PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
+        ss -lpn | grep -q ":$PORT " || break
+done
+
+Xvfb :${PORT} -terminate -ac -screen 0 800x600x8 &
+XVFBPID=$!
+
+femfat -dsp=localhost:${PORT} -job={{ inputfile }}
+ExitStatus=$?
+
+kill ${XVFBPID}
+
+exit $ExitStatus

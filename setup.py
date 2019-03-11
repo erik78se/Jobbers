@@ -12,6 +12,7 @@ setuptools.setup(
         'console_scripts': [
             'jobber=jobbers.jobber:cli',
             'abaqus=jobbers.abaqus:cli',
+            'femfat=jobbers.femfat:process',
         ],
     },
     include_package_data = True
