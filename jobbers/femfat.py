@@ -14,20 +14,20 @@ def process():
     based on questions from inquirer
     as a string to stdout """
 
+
+    try:
+        cluster_scratch_root
+    except NameError:
+        cluster_scratch_root='/cluster/scratch'
+
+
     # Templates relative to the package
     templates_dir=path.join(path.dirname(jobbers.femfat.__file__), 'templates')
     template_files = glob.glob(os.path.join(templates_dir, 'femfat_*.j2'))
 
-    #clusters = { 'partition1': 36, 'partition2': 20 }
     versions = [ '5.3.1', '5.3', '5.2b', '5.2a', '5.2' ]
 
     inifile = 'femfat.ini'
-
-    #def get_cores(partition):
-    #    node_cores = int(clusters.get(partition))
-        #cores = node_cores * nodes
-
-    #    return node_cores
 
     def get_inputfile(path, ext):
         inputfiles = []
@@ -91,8 +91,6 @@ def process():
     jobname = answers.get("inputfiles")
     inputfile = os.path.basename(jobname)
     jobname = os.path.splitext(inputfile)[0]
-    #partition = answers.get("partitions")
-    #node_cores = get_cores(partition)
 
     # Check for existing femfat.ini file
     # and ask if overwrite the file
@@ -129,7 +127,6 @@ def process():
     with open(TEMPLATE_FILE) as file_:
         template = jinja2.Template(file_.read())
     
-    #outputText = template.render(answers=answers, version=version, inputfile=inputfile, jobname=jobname, partition=partition, node_cores=node_cores)  # this is where to put args to the template renderer
     outputText = template.render(answers=answers, version=version, inputfile=inputfile, jobname=jobname, start=start)  # this is where to put args to the template renderer
 
     try:

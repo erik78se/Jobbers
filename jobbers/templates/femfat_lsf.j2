@@ -1,24 +1,29 @@
 #!/bin/bash
 
 #BSUB -J {{ jobname }}
-##BSUB -n {{ node_cores }}
+#BSUB -app femfat
 #BSUB -n 1
 #BSUB -R "select[n_femfat]"
 #BSUB -q debug
-##BSUB -x
-
 {{ start }}
 
-export PATH=/share/apps/femfat/Linux/femfat{{ version }}/bin:$PATH
-echo $PATH > path.txt
+
+if [ -z $approot ]; then
+	approot="/share/apps"
+fi
+
+export PATH=$approot/femfat/Linux/femfat{{ version }}/bin:$PATH
+
 
 # unset SLURM_GTIDS (Seems abaqus crashes when this is set)
 unset SLURM_GTIDS
 
-export MAGNAECS_LICENSE_PATH="6300@licserv0003.scania.com:6300@licserv0002.scania.com:6300@licserv0001.scania.com"
+export MAGNAECS_LICENSE_PATH=""
 
 # SHARED DIR (All nodes sees this data)
-#mkdir /cluster/sesonas13/${USER}/${jobname}
+if [ -z cluster_scratch_root ]; then
+        cluster_scratch_root="/tmp"
+fi
 
 # Get availabe port
 read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
@@ -29,11 +34,9 @@ do
 done
 
 Xvfb :${PORT} -terminate -ac -screen 0 800x600x8 &
-XVFBPID=$!
 
-/share/apps/femfat/Linux/femfat{{ version }}/bin/femfat -dsp=localhost:${PORT} -job={{ inputfile }}
+femfat -dsp=localhost:${PORT} -job={{ inputfile }}
 ExitStatus=$?
 
-kill ${XVFBPID}
-
 exit $ExitStatus
+
