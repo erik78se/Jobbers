@@ -2,21 +2,23 @@
 Jobbers is a Python package that produces so called application "job-scripts".
 Those scripts are then ready to be submitted into SLURM.
 
-The main workflow is:
-1. Ask questions (inquirer).
-1. Perform some logics.
-1. Render output (SLURM scripts) with jinja2.
-
-## Main components: 
-* inquirer  # https://pypi.org/project/inquirer/
-* jinja2    # http://jinja.pocoo.org/docs/2.10/
-* click     # https://click.palletsprojects.com/
-
-# Install
+# Install snap from snapcraft.io
 You can install the software with snap from snapstore:
-```sudo snap install jobber --edge ``` # kind of
+```sudo snap install jobbers --devmode --edge```
 
-## Build
+# Running
+The snap packages installs scripts (as described in setup.py):
+* femfat-jobber
+* abaqus-jobber
+
+You can run them as:
+```bash
+jobbers.abaqus-jobber <some-output-file>
+```
+
+## Build & Development Environment
+* Build always on Ubuntu 18.04
+
 ```bash
 sudo apt install python3-venv
 python3 -m venv venv
@@ -24,27 +26,7 @@ source venv/bin/activate
 pip install --upgrade pip wheel
 pip install -r requirements.txt
 ```
-
-## Local development
-source venv/bin/activate
-pip --timeout 2 install --editable .
-jobber
-
-## Build pip package (wheel)
-The buildt whl package ends up in "dist" directory
-```bash
-python setup.py sdist
-python setup.py bdist_wheel
-```
-Packages (tar.gz)  are built in "dist/"
-
-## Install local package with pip
-```bash
-pip install dist/Jobber-0.1.dev0-py3-none-any.whl
-```
-
 ## Build snap
-* Build on Ubuntu "bionic".
 
 ```bash
 sudo snap install snapcraft --classic
@@ -62,3 +44,26 @@ snapcraft
 sudo snap install --devmode jobbers_0.1.snap
 
 ## application will be available as "jobber.<application>"
+
+
+
+## Local python development tip
+You can install a local version with pip which allows you to edit and test without having to build packages to test scripts etc. This is really useful.
+```
+source venv/bin/activate
+pip --timeout 2 install --editable .
+```
+
+## Build pip package (wheel)
+The buildt whl package ends up in "dist" directory
+```bash
+python setup.py sdist
+python setup.py bdist_wheel
+```
+Packages (tar.gz)  are built in "dist/"
+
+## Install local package with pip
+```bash
+pip install dist/Jobber-0.1.dev0-py3-none-any.whl
+```
+
