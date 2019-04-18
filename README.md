@@ -34,18 +34,12 @@ sudo snap install snapcraft --classic
 # (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
 # (if kvm) export SNAPCRAFT_BUILD_ENVIRONMENT=host
 
-# Clean up previous build
+# Clean up any previous builds
 python3 setup.py clean
 rm -rf build/ dist/
 snapcraft clean
 snapcraft
-
-## Install snap (devmode)
-sudo snap install --devmode jobbers_0.1.snap
-
-## application will be available as "jobber.<application>"
-
-
+```
 
 ## Local python development tip
 You can install a local version with pip which allows you to edit and test without having to build packages to test scripts etc. This is really useful.
@@ -66,4 +60,3 @@ Packages (tar.gz)  are built in "dist/"
 ```bash
 pip install dist/Jobber-0.1.dev0-py3-none-any.whl
 ```
-
