@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='Jobber',
-    version='0.2dev',
+    version='0.3dev',
     install_requires=['jinja2','inquirer','Click'],
     packages=setuptools.find_packages(),
     license='GPLv3',
@@ -10,9 +10,8 @@ setuptools.setup(
 #     scripts=['bin/jobber'],
     entry_points={
         'console_scripts': [
-            'jobber=jobbers.jobber:cli',
-            'abaqus=jobbers.abaqus.controller:cli',
-            'femfat=jobbers.femfat:process',
+            'abaqus-jobber=jobbers.abaqus.controller:cli',
+            'femfat-jobber=jobbers.femfat:process',
         ],
     },
     include_package_data = True
