@@ -51,8 +51,9 @@ pip --timeout 2 install --editable .
 ## Build pip package (wheel)
 The buildt whl package ends up in "dist" directory
 ```bash
-python setup.py sdist
-python setup.py bdist_wheel
+python3 setup.py clean
+python3 setup.py sdist
+python3 setup.py bdist_wheel
 ```
 Packages (tar.gz)  are built in "dist/"
 
