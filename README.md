@@ -14,7 +14,7 @@ The main workflow is:
 
 # Install
 You can install the software with snap from snapstore:
- sudo snap install jobber
+```sudo snap install jobber --edge ``` # kind of
 
 ## Build
 ```bash
@@ -47,7 +47,7 @@ pip install dist/Jobber-0.1.dev0-py3-none-any.whl
 * Build on Ubuntu "bionic".
 
 ```bash
-sudo snap install snapcraft
+sudo snap install snapcraft --classic
 
 # (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
 # (if kvm) export SNAPCRAFT_BUILD_ENVIRONMENT=host
