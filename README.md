@@ -1,6 +1,22 @@
 # Jobbers
+Jobbers is a Python package that produces so called application "job-scripts".
+Those scripts are then ready to be submitted into SLURM.
 
-## Prepare for build
+The main workflow is:
+1. Ask questions (inquirer).
+1. Perform some logics.
+1. Render output (SLURM scripts) with jinja2.
+
+## Main components: 
+* inquirer  # https://pypi.org/project/inquirer/
+* jinja2    # http://jinja.pocoo.org/docs/2.10/
+* click     # https://click.palletsprojects.com/
+
+# Install
+You can install the software with snap from snapstore:
+ sudo snap install jobber
+
+## Build
 ```bash
 sudo apt install python3-venv
 python3 -m venv venv
