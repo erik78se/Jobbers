@@ -44,13 +44,17 @@ pip install dist/Jobber-0.1.dev0-py3-none-any.whl
 ```
 
 ## Build snap
+* Build on Ubuntu "bionic".
+
 ```bash
+sudo snap install snapcraft
+
 # (if lxd) export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
 # (if kvm) export SNAPCRAFT_BUILD_ENVIRONMENT=host
 
 # Clean up previous build
 python3 setup.py clean
-rp -rf build/ dist/
+rm -rf build/ dist/
 snapcraft clean
 snapcraft
 
