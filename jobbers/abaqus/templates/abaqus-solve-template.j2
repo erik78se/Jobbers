@@ -13,6 +13,7 @@ INPUT={{job.inputfile}}               # The inpfile parameter
 # (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
 
 # change to SCRATCH ({{job.generic_resources.scratch}})
+module use ~/.modules
 mkdir -p {{job.generic_resources.scratch}}
 cd {{job.generic_resources.scratch}}
 
