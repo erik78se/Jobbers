@@ -87,7 +87,7 @@ def _workflow_solve(template,inp,output):
     if template:
         solvejob.template = template
     else:
-        solvejob.template="{}/{}".format( templates_dir, 'abaqus-test-template.tmpl.j2' )
+        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-template.j2' )
 
     _render_to_out(solvejob,output)
     
