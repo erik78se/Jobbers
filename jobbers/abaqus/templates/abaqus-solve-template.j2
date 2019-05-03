@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH -t {{job.generic_resources.timelimit}}                # timelimit in minutes
 #SBATCH --mem={{job.generic_resources.memory}}           # memory to reserve
-#SBATCH -J Abaqus-solve           # the job name
+#SBATCH -J {{job.generic_resources.jobname}}           # the job name
 #SBATCH --mail-type=END      # an email is send at the end of the job
 #SBATCH -n {{job.generic_resources.cpus}}                 # processors to use
 #SBATCH -N 1                 # nodes to use
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}         # licenses needed
 #SBATCH --partition {{job.generic_resources.partitions|join(",")}}   # which partitions to consider
 
-PROJECT="abaqus-solve"                 # Project is the name of the script
+PROJECT="abaqus-analisys"                 # Project is the name of the script
 INPUT={{job.inputfile}}               # The inpfile parameter 
 # (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
 
@@ -26,7 +26,7 @@ module load {{job.abaqus_module.module}}
 unset SLURM_GTIDS            # this is odd, but it has to be (!)
 
 # Start ABAQUS/Standard
-ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
+ABQLauncher job="$SLURM_JOB_NAME" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
 
 # Start ABAQUS/Explicit (remove # in front and add one to the standard call)
 # ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi

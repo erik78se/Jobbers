@@ -20,7 +20,9 @@ def ask_generic_resources():
     """ Returns a dict with the answers for questions about generic resources """
 
     questions = [
-        
+	inquirer.Text('jobname',
+                      message="Name of job",
+                      default='my-job'),
         inquirer.Text('memory',
                       message="Max Memory needed (GB)",
                       validate=lambda _, x: 0 <= int(x) <= 1000,
