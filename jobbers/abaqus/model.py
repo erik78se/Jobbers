@@ -6,6 +6,7 @@ class SolveJob:
         self.generic_resources = {}
         self.abaqus_licenses = {}
         self.submodel_odb = {}
+        self.abaqus_module = {}
 
 class GenericJob:
     """ Model for a generic job """

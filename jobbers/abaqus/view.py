@@ -100,8 +100,19 @@ def ask_abaqus_licenses():
                         default='abaqus@flex_host'),
           inquirer.Text('volume',
                         message="How many licenses of {license}",
-                        validate=lambda _, x: 0 <= x <= 1000,
+                        validate=lambda _, x: 0 <= int(x) <= 1000,
                         default='30'),
           ]
           
     return inquirer.prompt(q)
+
+def ask_abaqus_module():
+    """ Ask for abaqus lmod module """
+    q = [ inquirer.List('module',
+                        message="Select abaqus module",
+                        choices=['abaqus/2018-2','abaqus/2019'],
+                        default='abaqus/2018-2'),
+          ]
+
+    return inquirer.prompt(q)
+

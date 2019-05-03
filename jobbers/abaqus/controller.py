@@ -11,6 +11,7 @@ from jobbers.abaqus.view import ( ask_generic_resources,
                                   ask_submodel_odb,
                                   ask_abaqus_licenses,
                                   ask_inp,
+			          ask_abaqus_module,
 )
 
 
@@ -71,6 +72,7 @@ def _workflow_solve(template,inp,output):
     ##################################
     ## Collect needed resources.
     ##################################
+    solvejob.abaqus_module = ask_abaqus_module()
 
     solvejob.generic_resources = ask_generic_resources()
     

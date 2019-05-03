@@ -20,16 +20,15 @@ if [[ ! -r "$INPUT" || "$SLURM_SUBMIT_DIR/$INPUT" -nt "$INPUT" ]] ; then
    cp "$SLURM_SUBMIT_DIR/$INPUT" .
 fi
 
-# tell the system which version of abaqus you want to use
-# module add abaqus/latest
-alias abaqus='abaqus'
+# tell the system which version of abaqus you want to use (ABQLauncher)
+module load {{job.abaqus_module.module}}
 unset SLURM_GTIDS            # this is odd, but it has to be (!)
 
 # Start ABAQUS/Standard
-abaqus job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
+ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
 
 # Start ABAQUS/Explicit (remove # in front and add one to the standard call)
-# abaqus job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi
+# ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi
 
 # Start Abaqus non parallel
-# abaqus job="$PROJECT" analysis input="$INPUT" interactive
+# ABQLauncher job="$PROJECT" analysis input="$INPUT" interactive
