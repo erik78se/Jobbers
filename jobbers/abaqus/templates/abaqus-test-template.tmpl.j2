@@ -8,10 +8,11 @@
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}         # licenses needed
 #SBATCH --partition {{job.generic_resources.partitions|join(",")}}   # which partitions to consider
 
-PROJECT="$1"                 # Project is the name of the script
+PROJECT="AbaqusJob"                 # Project is the name of the script
 INPUT={{job.inputfile}}               # The inpfile parameter
 
 # change to SCRATCH ({{job.generic_resources.scratch}})
+mkdir -p {{job.generic_resources.scratch}}
 cd {{job.generic_resources.scratch}}
 
 # Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH
