@@ -22,9 +22,9 @@ def ask_generic_resources():
     questions = [
         
         inquirer.Text('memory',
-                      message="Max Memory needed (gb)",
-                      validate=lambda _, x: 0 <= x <= 1000,
-                      default=1),
+                      message="Max Memory needed (GB)",
+                      validate=lambda _, x: 0 <= int(x) <= 1000,
+                      default='10'),
         inquirer.List('cpus',
                       message="Needed cpus:",
                       choices=[1,2,4,8,16,24,32],),
@@ -45,21 +45,34 @@ def ask_generic_resources():
     
     return inquirer.prompt(questions)
 
-def ask_jobclass_input():
+def ask_workflow():
     """ Returns a dict with the answers """
 
     questions = [
 
-        inquirer.List('jobclass',
+        inquirer.List('workflow',
                       message="What do you want to do?",
                       choices=[
-                          ('Debug session', 'None'),
-                          ('Generic script submission','None'),
+                          ('Debug session', 'debug'),
+                          ('Generic script submission','generic'),
                           ('Solve problem','solve'),],
                       default='solve'),
 
-        inquirer.Path('inputfile',
-                      message="Input file (absolute path)",
+        # inquirer.Path('inputfile',
+        #               message="Input file (absolute path)",
+        #               path_type=inquirer.Path.FILE,
+        #               exists=True,
+        #               default=next(iter(_list_inputfiles()), None )),
+    ]
+
+    return inquirer.prompt(questions)
+
+def ask_inp():
+    """ Returns a dict with the answers """
+
+    questions = [
+        inquirer.Path('inpfile',
+                      message=".inp file to use (absolute path)",
                       path_type=inquirer.Path.FILE,
                       exists=True,
                       default=next(iter(_list_inputfiles()), None )),

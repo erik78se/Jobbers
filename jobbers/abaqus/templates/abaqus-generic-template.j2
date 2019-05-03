@@ -5,7 +5,6 @@
 #SBATCH --mail-type=END      # an email is send at the end of the job
 #SBATCH -n {{job.generic_resources.cpus}}                 # processors to use
 #SBATCH -N 1                 # nodes to use
-#SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}         # licenses needed
 #SBATCH --partition {{job.generic_resources.partitions|join(",")}}   # which partitions to consider
 
 PROJECT="$1"                 # Project is the name of the script
