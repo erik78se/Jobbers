@@ -96,12 +96,12 @@ def ask_abaqus_licenses():
     """ Ask for abaqus licenses """
     q = [ inquirer.List('license',
                         message="Select license",
-                        choices=['abaqus','cae'],
-                        default='abaqus'),
+                        choices=['abaqus@flex_host'],
+                        default='abaqus@flex_host'),
           inquirer.Text('volume',
                         message="How many licenses of {license}",
                         validate=lambda _, x: 0 <= x <= 1000,
-                        default=10),
+                        default='30'),
           ]
           
     return inquirer.prompt(q)
