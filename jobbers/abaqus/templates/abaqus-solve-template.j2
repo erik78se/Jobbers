@@ -8,23 +8,28 @@
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}         # licenses needed
 #SBATCH --partition {{job.generic_resources.partitions|join(",")}}   # which partitions to consider
 
+workdir=$SLURM_SUBMIT_DIR
+scratch={{job.generic_resources.scratch}}
+mkdir -p {{job.generic_resources.scratch}}
+
+echo working dir: $workdir
+echo scratch dir: $scratch
+
 PROJECT="abaqus-analisys"                 # Project is the name of the script
-INPUT={{job.inputfile}}               # The inpfile parameter 
+INPUT=$(basename {{job.inputfile}})               # The inpfile parameter 
 # (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
 
-# change to SCRATCH ({{job.generic_resources.scratch}})
-module use ~/.modules
-mkdir -p {{job.generic_resources.scratch}}
-cd {{job.generic_resources.scratch}}
-
-# Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH
-if [[ ! -r "$INPUT" || "$SLURM_SUBMIT_DIR/$INPUT" -nt "$INPUT" ]] ; then
-   cp "$SLURM_SUBMIT_DIR/$INPUT" .
+# Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH #TODO: Needs to be fixed
+if [[ ! -r "$scratch/$INPUT" || "$INPUT" -nt "$scratch/$INPUT" ]] ; then
+   cp "$INPUT" $scratch
 fi
 
 # tell the system which version of abaqus you want to use (ABQLauncher)
+module use ~/.modules
 module load {{job.abaqus_module.module}}
 unset SLURM_GTIDS            # this is odd, but it has to be (!)
+
+cd $scratch
 
 # Start ABAQUS/Standard
 ABQLauncher job="$SLURM_JOB_NAME" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
