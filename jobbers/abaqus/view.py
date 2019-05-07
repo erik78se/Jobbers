@@ -6,14 +6,15 @@ import os
 import jobbers
 import glob
 
+
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """
     if not path:
         path = os.getcwd()
 
-    files = glob.glob(os.path.join(path, '*.inp'))
+    inputfiles = glob.glob(os.path.join(path, '*.inp'))
     
-    return(glob.glob(os.path.join(path, '*.inp')))
+    return inputfiles
 
 def ask_jobname():
     """ Returns a dict with the answers for questions about jobname """
