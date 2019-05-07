@@ -5,14 +5,9 @@ from pprint import pprint
 import click
 import jobbers
 import jobbers.abaqus.inpfile as inpfile
+from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import ( SolveJob, GenericJob)
-from jobbers.abaqus.view import ( ask_generic_resources,
-                                  ask_workflow,
-                                  ask_submodel_odb,
-                                  ask_abaqus_licenses,
-                                  ask_inp,
-			          ask_abaqus_module,
-)
+from jobbers.abaqus.view import *
 
 
 @click.command()
@@ -50,7 +45,16 @@ def cli(output,template,inp):
     wf = ask_workflow()['workflow']
     
     if wf == 'solve':
-        _workflow_solve(template,inp,output)
+        if not inp:
+            inp = ask_inp()['inpfile']
+
+        # Parse the inp
+        
+        # If eigenfreq == false (We can run with MPI if no eigen)
+        if True:
+            _workflow_solve_parallel(template,inp,output)
+        else:
+            _workflow_solve(template,inp,output)
     elif wf == 'debug':
         _workflow_debug()
     elif wf == 'generic':
@@ -63,11 +67,7 @@ def _workflow_solve(template,inp,output):
     """
     The solve workflow.
     """
-    solvejob = SolveJob()
-    if inp:
-        solvejob.inputfile = inp
-    else:
-        solvejob.inputfile = ask_inp()['inpfile']
+    solvejob = SolveJob(inp)
 
     ##################################
     ## Collect needed resources.
@@ -75,8 +75,14 @@ def _workflow_solve(template,inp,output):
     solvejob.abaqus_module = ask_abaqus_module()
 
     solvejob.generic_resources = ask_generic_resources()
+
+    solvejob.cpus = ask_cpus_int()
+
+    lics_needed = calculate_abaqus_licenses( solvejob.cpus )
     
     solvejob.abaqus_licenses = ask_abaqus_licenses()
+
+    solvejob.partitions = ask_partitions()['partitions']
     
     ##########################################
     # Info gathered, dispatch to job rendering
@@ -88,6 +94,50 @@ def _workflow_solve(template,inp,output):
         solvejob.template = template
     else:
         solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-template.j2' )
+
+    _render_to_out(solvejob,output)
+
+def _workflow_solve_parallel(template,inp,output):
+    """
+    The solve-parallel sub workflow.
+    """
+    solvejob = SolveJob(inp)
+
+    ##################################
+    ## Collect needed resources.
+    ##################################
+    solvejob.abaqus_module = ask_abaqus_module()
+
+    solvejob.jobname = ask_jobname()['jobname']
+    
+    solvejob.nodes = ask_nodes()['nodes']
+
+    solvejob.ntasks_per_node = 36  # We guess that cores =36 based on cluster sizes
+    
+    solvejob.cpus = int(solvejob.nodes * solvejob.ntasks_per_node)
+
+    lics_needed = calculate_abaqus_licenses( solvejob.cpus )
+    
+    # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
+
+    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
+
+    solvejob.scratch = ask_scratch()['scratch']
+    
+    solvejob.partitions = ask_partitions()['partitions']
+
+    solvejob.timelimit = ask_timelimit()['timelimit']
+    
+    ##########################################
+    # Info gathered, dispatch to job rendering
+    ##########################################
+
+    templates_dir=os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
+
+    if template:
+        solvejob.template = template
+    else:
+        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-parallel-template.j2' )
 
     _render_to_out(solvejob,output)
     
