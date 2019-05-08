@@ -1,0 +1,159 @@
+#!/bin/python3
+## Generic information
+#  SBATCH -J {{job.generic_resources.jobname}}                                  # the job name
+#  SBATCH -t {{job.generic_resources.timelimit}}                                # time limit in minutes
+#  SBATCH -A {{user_name}}                                                      # Name of user
+#  SBATCH --mail-type=ALL                                                       # an email is send at the start and end
+#  SBATCH --partition {{job.generic_resources.partitions|join(",")}}            # which partitions to consider
+##  Jobpack 1
+#  SBATCH -N {{job.generic_resources.head_nodes}}                               # Nodes to use
+#  SBATCH --mem={{job.generic_resources.memory_head_node}}                      # memory to reserve head node
+#  SBATCH --lic {{job.abaqus_licenses.license}}@{{job.abaqus_licenses.slurm_dbd}}:{{job.abaqus_licenses.volume}}  # licenses needed, appointed to master job
+#  SBATCH --exclusive                                                           # Exclusive execution on head node
+#  Jobpack 2
+#  SBATCH packjob                                                               # Job-pack for heterogeneous jobs
+#  SBATCH -N {{job.generic_resources.worker_nodes}}                             # processors to use
+#  SBATCH --mem={{job.generic_resources.memory_worker_node}}                    # memory to reserve
+#  SBATCH --exclusive                                                           # Exclusive execution on worker node
+
+# Import required python modules
+import os
+import sys
+import re
+import subprocess
+import glob
+import shutil
+import pwd
+
+PROJECT = "abaqus-analisys"                 # Project is the name of the script
+
+# Get job information from SLURM
+JOB_NAME = os.getenv('SLURM_JOB_NAME')
+HOSTNAME = os.getenv('HOSTNAME')
+USER = os.getenv('USER')
+JOB_ID = os.getenv('SLURM_JOBID')
+STARTDIR = os.getenv('SLURM_SUBMIT_DIR')
+
+# Unset variable to avoid strange bug
+if "SLURM_GTIDS" in os.environ:
+    del os.environ['SLURM_GTIDS']
+
+# Get compute hosts and total number of CPUs
+mp_host_list = '['
+cpus = 0
+HOST_SPLIT = 6
+if 'SLURM_PACK_SIZE' in os.environ:
+    for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
+        cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
+        m = re.match('(\d*)', cpus_per_node)
+        if m:
+            cpus_per_node = m.group(0)
+        else:
+            sys.exit('ERROR: Number of CPUs per node could not be determined!')
+
+        for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
+            mp_host_list += "['%s', %s], " % (host_name, cpus_per_node)
+            cpus += int(cpus_per_node)
+        mp_host_list += ']'
+else:
+    for host in os.getenv('SLURM_JOB_NODELIST').split(','):
+        mp_host_list += "['%s', %s], " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
+        cpus += int(os.getenv('SLURM_CPUS_ON_NODE'))
+    mp_host_list += ']'
+
+# Create scratch folder
+local_scratch_folder = f'/scratch/{USER}/abaqus_job_{JOB_ID}'
+try:
+    os.makedirs(local_scratch_folder)
+except OSError:
+    sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
+
+# Stage required files to local scratch
+files_to_stage_up = [
+    {{job.inputfiles}}
+]
+try:
+    for stage_up_file in files_to_stage_up:
+        for source_file in glob.glob("%s" % stage_up_file):
+            target_file = os.path.join(local_scratch_folder, os.path.basename(source_file))
+            shutil.copy(source_file, target_file)
+except (IOError, os.error) as why:
+    sys.exit(f' ERROR: Stage up failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
+
+# Load application module
+module_cmd = {{job.generic_resources.module_cmd}}
+module_process = subprocess.Popen(module_cmd, shell=True)
+module_process_exit_status = module_process.wait(10)
+if module_process != 0:
+    sys.exit(f'ERROR: Abaqus module could not be loaded, exiting: \n\t Module:{module_cmd}')
+
+# Assemble command line
+abaqus_cmd = ["ABQLauncher",
+              f'job={JOB_NAME}',
+              "input={{job.inputfile}}",
+              "interactive",
+              f'cpus={str(cpus)}',
+              f'mp_host_split={str(HOST_SPLIT)}']
+
+# Set environmental variables
+local_env = dict()
+local_env['mp_host_list'] = mp_host_list
+
+# Launch application
+# TODO: Encapsulate process in processManager
+abaqus_process = subprocess.Popen(abaqus_cmd, shell=false, cwd=local_scratch_folder, env=local_env)
+abaqus_exit_status = abaqus_process.wait()
+
+if abaqus_exit_status == 0:
+    print("Abaqus was ran successfully")
+    exit_status = "Done"
+else:
+    print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}')
+    exit_status = "Exited"
+
+# Stage back result files files to local scratch
+files_to_stage_back = [
+    {{job.outputfiles}}
+]
+try:
+    for stage_back_file in files_to_stage_back:
+        for source_file in glob.glob("%s" % stage_up_file):
+            target_file = os.path.join(STARTDIR, os.path.basename(source_file))
+            shutil.copy(source_file, target_file)
+            # TODO: Check what this line actually does
+            os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
+except (IOError, os.error) as why:
+    sys.exit(f' ERROR: Stage back failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
+
+# CLEANING
+print(f'Removing files in directory /scratch/{USER} at cluster node {host_name}')
+try:
+    shutil.rmtree(local_scratch_folder)
+except (IOError, os.error) as why:
+    sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
+
+#INPUT={{job.inputfile}}               # The inpfile parameter
+# (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
+
+# change to SCRATCH ({{job.generic_resources.scratch}})
+#module use ~/.modules
+#mkdir -p {{job.generic_resources.scratch}}
+#cd {{job.generic_resources.scratch}}
+
+ # Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH
+#if [[ ! -r "$INPUT" || "$SLURM_SUBMIT_DIR/$INPUT" -nt "$INPUT" ]] ; then
+#   cp "$SLURM_SUBMIT_DIR/$INPUT" .
+#fi
+
+# tell the system which version of abaqus you want to use (ABQLauncher)
+#module load {{job.abaqus_module.module}}
+#unset SLURM_GTIDS            # this is odd, but it has to be (!)
+
+# Start ABAQUS/Standard
+#ABQLauncher job="$SLURM_JOB_NAME" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
+
+# Start ABAQUS/Explicit (remove # in front and add one to the standard call)
+# ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi
+
+# Start Abaqus non parallel
+# ABQLauncher job="$PROJECT" analysis input="$INPUT" interactive
