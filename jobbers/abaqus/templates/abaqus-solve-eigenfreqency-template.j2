@@ -10,16 +10,11 @@
 #  SBATCH --mem={{job.generic_resources.memory_head_node}}                      # memory to reserve head node
 #  SBATCH --lic {{job.abaqus_licenses.license}}@{{job.abaqus_licenses.slurm_dbd}}:{{job.abaqus_licenses.volume}}  # licenses needed, appointed to master job
 #  SBATCH --exclusive                                                           # Exclusive execution on head node
-#  Jobpack 2
-#  SBATCH packjob                                                               # Job-pack for heterogeneous jobs
-#  SBATCH -N {{job.generic_resources.worker_nodes}}                             # processors to use
-#  SBATCH --mem={{job.generic_resources.memory_worker_node}}                    # memory to reserve
-#  SBATCH --exclusive                                                           # Exclusive execution on worker node
+
 
 # Import required python modules
 import os
 import sys
-import re
 import subprocess
 import glob
 import shutil
@@ -41,20 +36,9 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 mp_host_list = '['
 cpus = 0
-HOST_SPLIT = 6
+HOST_SPLIT = 1  # May not be >1 for job type eigenfrequency
 if 'SLURM_PACK_SIZE' in os.environ:
-    for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
-        cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
-        m = re.match('(\d*)', cpus_per_node)
-        if m:
-            cpus_per_node = m.group(0)
-        else:
-            sys.exit('ERROR: Number of CPUs per node could not be determined!')
-
-        for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
-            mp_host_list += "['%s', %s], " % (host_name, cpus_per_node)
-            cpus += int(cpus_per_node)
-        mp_host_list += ']'
+    sys.exit(f' ERROR: Abaqus Eigenfreqency jobs may not be distributed on several nodes, exiting!')
 else:
     for host in os.getenv('SLURM_JOB_NODELIST').split(','):
         mp_host_list += "['%s', %s], " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
@@ -134,3 +118,4 @@ finally:
             shutil.rmtree(local_scratch_folder)
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
+
