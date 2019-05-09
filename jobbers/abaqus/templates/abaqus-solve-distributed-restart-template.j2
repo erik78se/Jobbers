@@ -107,7 +107,7 @@ try:
 
     # Launch application
     # TODO: Encapsulate process in processManager
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=false, cwd=local_scratch_folder, env=local_env)
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=local_env)
     abaqus_exit_status = abaqus_process.wait()
 
     if abaqus_exit_status == 0:
