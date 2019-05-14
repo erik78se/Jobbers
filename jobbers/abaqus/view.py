@@ -178,10 +178,11 @@ def ask_abaqus_licenses_parallel( default_volume ):
 
 def ask_abaqus_module():
     """ Ask for abaqus lmod module """
+    m = config['abaqus']['envmodules'].get()
     q = [ inquirer.List('module',
                         message="Select abaqus module",
-                        choices=config['abaqus']['envmodules'].get(),
-                        default=config['abaqus']['envmodules'].get()[0] ),
+                        choices=m,
+                        default=m[0] ),
           ]
 
     return inquirer.prompt(q)
