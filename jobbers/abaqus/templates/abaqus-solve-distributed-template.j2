@@ -1,21 +1,34 @@
 #!/bin/python3
 ## Generic information
-#SBATCH -J {{job.jobname}}                                                    # the job name
-#SBATCH -t {{job.timelimit}}                                                  # time limit in minutes
-#SBATCH -A abaqus                                                             # TODO: Name of account (not user) for accounting.
-#SBATCH --mail-type=ALL                                                       # TODO: VERIFY! an email is send at the start and end
-#SBATCH --partition {{job.partitions|join(",")}}                              # which partitions to consider
+# the job name:
+#SBATCH -J {{job.jobname}}
+# time limit in minutes
+#SBATCH -t {{job.timelimit}}
+# TODO: Name of account (not user) for accounting.
+#SBATCH -A abaqus
+# TODO: VERIFY! an email is send at the start and end
+#SBATCH --mail-type=ALL
+# which partitions to consider
+#SBATCH --partition {{job.partitions|join(",")}}
 ##  Jobpack 1
-#SBATCH -N 1                                                                  # Nodes to use - always one head node
-#SBATCH --mem=700G                                                            # memory to reserve head node (clusterconfig?)
-#SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}  # licenses needed, appointed to master job
-#SBATCH --exclusive                                                           # Exclusive execution on head node
+# Nodes to use - always one head node
+#SBATCH -N 1
+# memory to reserve head node (clusterconfig?)
+#SBATCH --mem=700G
+# licenses needed, appointed to master job
+#SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
+# Exclusive execution on head node
+#SBATCH --exclusive
 {% if job.nodes > 1 %}
-#  Jobpack 2
-#SBATCH packjob                                                               # Job-pack for heterogeneous jobs
-#SBATCH -N {{ job.nodes - 1 }}                                                # Remaning nodes are worker nodes
-#SBATCH --mem=300G                                                            # memory to reserve (clusterconfig?)
-#SBATCH --exclusive                                                           # Exclusive execution on worker node
+##  Jobpack 2
+# Job-pack for heterogeneous jobs
+#SBATCH packjob
+# Remaning nodes are worker nodes
+#SBATCH -N {{ job.nodes - 1 }}
+# memory to reserve (clusterconfig?)
+#SBATCH --mem=300G
+# Exclusive execution on worker node
+#SBATCH --exclusive
 {% endif %}
 
 # Import required python modules
@@ -42,7 +55,7 @@ if "SLURM_GTIDS" in os.environ:
     del os.environ['SLURM_GTIDS']
 
 # Get compute hosts and total number of CPUs
-mp_host_list = '['
+mp_host_list = 'mp_host_list=['
 cpus = 0
 HOST_SPLIT = 6
 if 'SLURM_PACK_SIZE' in os.environ:
@@ -57,12 +70,18 @@ if 'SLURM_PACK_SIZE' in os.environ:
         for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
             mp_host_list += "['%s', %s], " % (host_name, cpus_per_node)
             cpus += int(cpus_per_node)
-        mp_host_list += ']'
+    mp_host_list += ']'
 else:
     for host in os.getenv('SLURM_JOB_NODELIST').split(','):
         mp_host_list += "['%s', %s], " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
         cpus += int(os.getenv('SLURM_CPUS_ON_NODE'))
     mp_host_list += ']'
+
+srun = subprocess.Popen(['srun', 'hostname'], stdout=subprocess.PIPE)
+(sout, serr) = srun.communicate()
+srun_exit = srun.wait(10)
+print(sout)
+ 
 
 # Create scratch folder
 local_scratch_folder = f'/scratch/{USER}/abaqus_job_{JOB_ID}'
@@ -99,15 +118,17 @@ else:
 abaqus_cmd = ['ABQLauncher',
               f'job={JOB_NAME}',
               f'input={os.path.basename("{{job.inpfile}}")}',
-#              f'input={{job.inpfile}}',
               'interactive',
-              'standard_parallel=all',
-              'mp_mode=mpi',
+#              'standard_parallel=all',
+#              'mp_mode=mpi',
               f'cpus={str(cpus)}',
               f'mp_host_split={str(HOST_SPLIT)}']
 
-# Set environmental variables
-os.environ.update(mp_host_list=mp_host_list)
+# Set environmental variables - skip for now and use abaqus_v6.env
+os.environ['MPI_REMSH'] = 'ssh -x -q -o StrictHostKeyChecking=no'
+with open(f'{local_scratch_folder}/abaqus_v6.env', 'a') as abq_fh:
+    abq_fh.write(f'{mp_host_list}\n')
+
 print("==== BEGIN ENVIRONMENT DUMP ====")
 for param in os.environ.keys():
     print(f'{param}: {os.environ[param]}')
@@ -129,15 +150,16 @@ else:
 
 # Stage back result files files to local scratch
 files_to_stage_back = [
-    {{job.outputfiles}}
 ]
+files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
 try:
     for stage_back_file in files_to_stage_back:
-        for source_file in glob.glob("%s" % stage_up_file):
-            target_file = os.path.join(STARTDIR, os.path.basename(source_file))
-            shutil.copy(source_file, target_file)
-            # TODO: Check what this line actually does
-            os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
+        print(f'Staging: {stage_back_file}')
+        # for source_file in glob.glob("%s" % stage_back_file):
+        target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
+        shutil.copy(stage_back_file, target_file)
+        # TODO: Check what this line actually does
+        # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410
 except (IOError, os.error) as why:
     sys.exit(f' ERROR: Stage back failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
 
