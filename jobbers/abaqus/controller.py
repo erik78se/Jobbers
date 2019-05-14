@@ -4,10 +4,11 @@ import jinja2    # http://jinja.pocoo.org/docs/2.10/
 from pprint import pprint
 import click
 import jobbers
-# import jobbers.abaqus.inpfile as inpfile
+from jobbers.abaqus.inpfileparse import traverse
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
-from jobbers.abaqus.model import ( SolveJob, GenericJob)
+from jobbers.abaqus.model import ( SolveJob, GenericJob, Inpfile)
 from jobbers.abaqus.view import *
+
 
 
 @click.command()
@@ -45,38 +46,56 @@ def cli(output,template,inp):
     wf = ask_workflow()['workflow']
     
     if wf == 'solve':
+
+        # Collect "no such file"
+        no_such_files = []
+        
         if not inp:
             inp = ask_inp()['inpfile']
 
-        # Parse the inp
+        inpFile = Inpfile(filename=inp)
+
+        input_deck = traverse(inpFile)
+
+        # Visualize missing files
+        for i in input_deck:
+            if not i.file.is_file():
+                print("--- Unable to locate from input file (No such file?) ---")
+                print(i)
+                no_such_files.append(i)
         
-        # If eigenfreq == false (We can run with MPI if no eigen)
-        if True:
-            _workflow_solve_parallel(template,inp,output)
+        # If eigenfrequency == False then We can run with MPI.
+        if not input_deck[0].eigenfrequency:   
+
+            _workflow_solve_parallel(template,inpFile,output)
+            
         else:
-            _workflow_solve(template,inp,output)
+            
+            _workflow_solve(template,inpFile,output)
+            
     elif wf == 'debug':
+        
         _workflow_debug()
+        
     elif wf == 'generic':
+        
         _workflow_generic(template,output)
+        
     else:
-        print("Not implemented")
         raise("Not implemented")
 
-def _workflow_solve(template,inp,output):
+def _workflow_solve(template,inpfile,output):
     """
     The solve workflow.
     """
-    solvejob = SolveJob(inp)
+    solvejob = SolveJob(inpfile)
 
     ##################################
     ## Collect needed resources.
     ##################################
     solvejob.abaqus_module = ask_abaqus_module()
 
-    solvejob.generic_resources = ask_generic_resources()
-
-    solvejob.cpus = ask_cpus_int()
+    solvejob.cpus = ask_cpus_int()['cpus']
 
     lics_needed = calculate_abaqus_licenses( solvejob.cpus )
     
@@ -97,11 +116,11 @@ def _workflow_solve(template,inp,output):
 
     _render_to_out(solvejob,output)
 
-def _workflow_solve_parallel(template,inp,output):
+def _workflow_solve_parallel(template,inpfile,output):
     """
     The solve-parallel sub workflow.
     """
-    solvejob = SolveJob(inp)
+    solvejob = SolveJob(inpfile)
 
     ##################################
     ## Collect needed resources.
