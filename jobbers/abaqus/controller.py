@@ -4,7 +4,7 @@ import jinja2    # http://jinja.pocoo.org/docs/2.10/
 from pprint import pprint
 import click
 import jobbers
-import jobbers.abaqus.inpfile as inpfile
+# import jobbers.abaqus.inpfile as inpfile
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import ( SolveJob, GenericJob)
 from jobbers.abaqus.view import *
