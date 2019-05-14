@@ -8,7 +8,7 @@ from jobbers.abaqus.inpfileparse import traverse
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import ( SolveJob, GenericJob, Inpfile)
 from jobbers.abaqus.view import *
-
+from jobbers import config
 
 
 @click.command()
@@ -22,7 +22,10 @@ from jobbers.abaqus.view import *
               type=click.Path(exists=True),
               help="User supplied .inp file for abaqus")
 def cli(output,template,inp):
-    """Processes questions and writes to file
+    """Processes questions and writes an abaqus slurm to file
+
+    User can override default config in ~/.config/Jobbers/config.yaml
+    it will take precedence over package defaults.
 
     Example usage: 
 
@@ -108,11 +111,12 @@ def _workflow_solve(template,inpfile,output):
     ##########################################
 
     templates_dir=os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
-
+    
     if template:
         solvejob.template = template
     else:
-        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-template.j2' )
+        solve_template=config['abaqus']['solve_template'].get()
+        solvejob.template="{}/{}".format( templates_dir, solve_template )
 
     _render_to_out(solvejob,output)
 
@@ -156,7 +160,8 @@ def _workflow_solve_parallel(template,inpfile,output):
     if template:
         solvejob.template = template
     else:
-        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-parallel-template.j2' )
+        solve_par_template=config['abaqus']['solve_parallel_template'].get()
+        solvejob.template="{}/{}".format( templates_dir, str(solve_par_template) )
 
     _render_to_out(solvejob,output)
     
