@@ -35,6 +35,7 @@ class GenericJob:
         self.ntasks_per_node = None
         self.partitions = []
 
+
 class Inpfile:
     """ Model for an .inp files """
     def __init__(self, filename=None):
