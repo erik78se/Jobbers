@@ -177,7 +177,7 @@ def ask_abaqus_module():
     """ Ask for abaqus lmod module """
     q = [ inquirer.List('module',
                         message="Select abaqus module",
-                        choices=['abaqus/2018-2','abaqus/2019'],
+                        choices=['abaqus/2018-2','abaqus/2019-G'],
                         default='abaqus/2018-2'),
           ]
 
