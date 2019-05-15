@@ -165,7 +165,7 @@ def ask_abaqus_licenses():
     return inquirer.prompt(q)
 
 
-def ask_abaqus_licenses_parallel( default_volume ):
+def ask_abaqus_licenses_parallel(default_volume):
     """ Ask for abaqus licenses in multiples of max(node-cpus) """
 
     
