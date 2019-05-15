@@ -149,7 +149,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     
     solvejob.partitions = ask_partitions()['partitions']
 
-    solvejob.timelimit = ask_timelimit()['timelimit']
+    solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
     
     ##########################################
     # Info gathered, dispatch to job rendering
