@@ -1,10 +1,15 @@
 #!/bin/python3
 ## Generic information
-#  SBATCH -J {{job.generic_resources.jobname}}                                  # the job name
-#  SBATCH -t {{job.generic_resources.timelimit}}                                # time limit in minutes
-#  SBATCH -A {{user_name}}                                                      # Name of user
-#  SBATCH --mail-type=ALL                                                       # an email is send at the start and end
-#  SBATCH --partition {{job.generic_resources.partitions|join(",")}}            # which partitions to consider
+#  Job name
+#  SBATCH -J {{job.generic_resources.jobname}}
+# Job time limit in minutes
+#  SBATCH -t {{job.generic_resources.timelimit}}
+# User name
+#  SBATCH -A {{user_name}}
+# Sed status mail to user at start and end
+#  SBATCH --mail-type=ALL
+# List of partitions available for submission
+#  SBATCH --partition {{job.generic_resources.partitions|join(",")}}
 ##  Jobpack 1
 #  SBATCH -N {{job.generic_resources.head_nodes}}                               # Nodes to use
 #  SBATCH --mem={{job.generic_resources.memory_head_node}}                      # memory to reserve head node
@@ -39,7 +44,7 @@ if "SLURM_GTIDS" in os.environ:
     del os.environ['SLURM_GTIDS']
 
 # Get compute hosts and total number of CPUs
-mp_host_list = '['
+LSB_MCPU_HOSTS = ''
 cpus = 0
 HOST_SPLIT = 6
 if 'SLURM_PACK_SIZE' in os.environ:
@@ -52,14 +57,13 @@ if 'SLURM_PACK_SIZE' in os.environ:
             sys.exit('ERROR: Number of CPUs per node could not be determined!')
 
         for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
-            mp_host_list += "['%s', %s], " % (host_name, cpus_per_node)
+            LSB_MCPU_HOSTS += "%s %s " % (host_name, cpus_per_node)
             cpus += int(cpus_per_node)
-        mp_host_list += ']'
 else:
     for host in os.getenv('SLURM_JOB_NODELIST').split(','):
-        mp_host_list += "['%s', %s], " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
+        LSB_MCPU_HOSTS += "%s %s " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
         cpus += int(os.getenv('SLURM_CPUS_ON_NODE'))
-    mp_host_list += ']'
+
 
 try:
     # Create scratch folder
@@ -98,7 +102,7 @@ try:
 
     # Set environmental variables
     local_env = dict()
-    local_env['mp_host_list'] = mp_host_list
+    local_env['LSB_MCPU_HOSTS'] = LSB_MCPU_HOSTS
 
     # Launch application
     # TODO: Encapsulate process in processManager
