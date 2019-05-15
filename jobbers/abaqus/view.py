@@ -16,16 +16,18 @@ def _list_inputfiles(path=None):
     
     return inputfiles
 
+
 def ask_jobname():
     """ Returns a dict with the answers for questions about jobname """
 
     questions = [
-	inquirer.Text('jobname',
+        inquirer.Text('jobname',
                       message="Name of job",
                       default='my-job'),
     ]
 
     return inquirer.prompt(questions)
+
 
 def ask_memory():
     """ Memory """
@@ -37,6 +39,7 @@ def ask_memory():
         ]
 
     return inquirer.prompt(questions)
+
 
 def ask_scratch():
     """ scratch """
@@ -50,6 +53,7 @@ def ask_scratch():
     ]
 
     return inquirer.prompt(questions)
+
 
 def ask_timelimit():
     """ Returns a dict with the answers for questions about timelimit """
@@ -72,6 +76,7 @@ def ask_partitions():
                           default=['partition1'],), ]
     return inquirer.prompt(questions)
 
+
 def ask_cpus_int():
     """ Returns a dict with the answers for questions about cpu """
     
@@ -82,6 +87,7 @@ def ask_cpus_int():
     ]
     
     return inquirer.prompt(questions)
+
 
 def ask_nodes():
     """ Returns a dict with the answers for questions about nodes """
@@ -118,6 +124,7 @@ def ask_workflow():
 
     return inquirer.prompt(questions)
 
+
 def ask_inp():
     """ Returns a dict with the answers """
 
@@ -142,6 +149,7 @@ def ask_submodel_odb():
     
     return inquirer.prompt(q)
 
+
 def ask_abaqus_licenses():
     """ Ask for abaqus licenses """
     q = [ inquirer.List('license',
@@ -155,6 +163,7 @@ def ask_abaqus_licenses():
           ]
           
     return inquirer.prompt(q)
+
 
 def ask_abaqus_licenses_parallel( default_volume ):
     """ Ask for abaqus licenses in multiples of max(node-cpus) """
@@ -175,11 +184,10 @@ def ask_abaqus_licenses_parallel( default_volume ):
 
 def ask_abaqus_module():
     """ Ask for abaqus lmod module """
-    q = [ inquirer.List('module',
+    q = [inquirer.List('module',
                         message="Select abaqus module",
-                        choices=['abaqus/2018-2','abaqus/2019'],
+                        choices=['abaqus/2018-2','abaqus/2019-G'],
                         default='abaqus/2018-2'),
           ]
 
     return inquirer.prompt(q)
-
