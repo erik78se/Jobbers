@@ -1,20 +1,35 @@
 #!/bin/python3
 ## Generic information
-#  SBATCH -J {{job.generic_resources.jobname}}                                  # the job name
-#  SBATCH -t {{job.generic_resources.timelimit}}                                # time limit in minutes
-#  SBATCH -A {{user_name}}                                                      # Name of user
-#  SBATCH --mail-type=ALL                                                       # an email is send at the start and end
-#  SBATCH --partition {{job.generic_resources.partitions|join(",")}}            # which partitions to consider
+# Job name
+#SBATCH -J {{job.generic_resources.jobname}}
+# Job time limit in minutes
+#SBATCH -t {{job.generic_resources.timelimit}}
+# User name
+#SBATCH -A {{user_name}}
+# Sed status mail to user at start and end
+#SBATCH --mail-type=ALL
+# List of partitions available for submission
+#SBATCH --partition {{job.generic_resources.partitions|join(",")}}
 ##  Jobpack 1
-#  SBATCH -N {{job.generic_resources.head_nodes}}                               # Nodes to use
-#  SBATCH --mem={{job.generic_resources.memory_head_node}}                      # memory to reserve head node
-#  SBATCH --lic {{job.abaqus_licenses.license}}@{{job.abaqus_licenses.slurm_dbd}}:{{job.abaqus_licenses.volume}}  # licenses needed, appointed to master job
-#  SBATCH --exclusive                                                           # Exclusive execution on head node
-#  Jobpack 2
-#  SBATCH packjob                                                               # Job-pack for heterogeneous jobs
-#  SBATCH -N {{job.generic_resources.worker_nodes}}                             # processors to use
-#  SBATCH --mem={{job.generic_resources.memory_worker_node}}                    # memory to reserve
-#  SBATCH --exclusive                                                           # Exclusive execution on worker node
+# Nodes to use - always one master node
+#SBATCH -N 1
+# Memory requirement on master node(cluster config?)
+#SBATCH --mem=700G
+# Licenses required, appointed to master job
+#SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
+# Exclusive execution on head node
+#SBATCH --exclusive
+{% if job.nodes > 1 %}
+##  Jobpack 2
+# Job-pack for heterogeneous jobs
+#SBATCH packjob
+# Remaining nodes are worker nodes
+#SBATCH -N {{ job.nodes - 1 }}
+# Memory requirement on worker nodes(clusterconfig?)
+#SBATCH --mem=300G
+# Exclusive execution on worker node
+#SBATCH --exclusive
+{% endif %}
 
 # Import required python modules
 import os
@@ -23,7 +38,8 @@ import re
 import subprocess
 import glob
 import shutil
-# import pwd
+import json
+
 
 PROJECT = "abaqus-analisys"                 # Project is the name of the script
 
@@ -39,9 +55,9 @@ if "SLURM_GTIDS" in os.environ:
     del os.environ['SLURM_GTIDS']
 
 # Get compute hosts and total number of CPUs
-mp_host_list = '['
+LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = 6
+HOST_SPLIT = {{job.host_split}}
 if 'SLURM_PACK_SIZE' in os.environ:
     for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
         cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
@@ -52,14 +68,13 @@ if 'SLURM_PACK_SIZE' in os.environ:
             sys.exit('ERROR: Number of CPUs per node could not be determined!')
 
         for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
-            mp_host_list += "['%s', %s], " % (host_name, cpus_per_node)
+            LSB_MCPU_HOSTS += "%s %s " % (host_name, cpus_per_node)
             cpus += int(cpus_per_node)
-        mp_host_list += ']'
 else:
     for host in os.getenv('SLURM_JOB_NODELIST').split(','):
-        mp_host_list += "['%s', %s], " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
+        LSB_MCPU_HOSTS += "%s %s " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
         cpus += int(os.getenv('SLURM_CPUS_ON_NODE'))
-    mp_host_list += ']'
+
 
 try:
     # Create scratch folder
@@ -71,7 +86,7 @@ try:
 
     # Stage required files to local scratch
     files_to_stage_up = [
-        {{job.inputfiles}}
+        {{job.inputfile}}
     ]
     try:
         for stage_up_file in files_to_stage_up:
@@ -79,19 +94,21 @@ try:
                 target_file = os.path.join(local_scratch_folder, os.path.basename(source_file))
                 shutil.copy(source_file, target_file)
     except (IOError, os.error) as why:
-        sys.exit(f' ERROR: Stage up failed: \
-                    \n\t Source: {source_file} \
-                    \n\t Target: {target_file} \
-                    \n\t Problem: {str(why)}')
+        sys.exit(f' ERROR: Stage up failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
 
-    # Load application module
-    module_cmd = {{job.generic_resources.module_cmd}}
-    module_process = subprocess.Popen(module_cmd, shell=True)
+    # Load application module into local env
+    module_env = dict()
+    module_abq = '{{job.abaqus_module.module}}'
+    module_cmd = f'module load {module_abq}'
+    dump_cmd = '/usr/bin/python -c "import os, json;print json.dumps(dict(os.environ))"'
+    module_process = subprocess.Popen(['/bin/bash', '-c', f'{module_cmd} && {dump_cmd}'], stdout=subprocess.PIPE)
+    (module_out, module_err) = module_process.communicate()
     module_process_exit_status = module_process.wait(10)
-    if module_process != 0:
-        sys.exit(f'ERROR: Abaqus module could not be loaded, exiting: \n\t Module:{module_cmd}')
+    if module_process_exit_status != 0:
+        sys.exit(f'ERROR: Abaqus module {module_abq} could not be loaded, exiting.\n\tModule:{module_abq}\n\tstdout: {module_out}\n\tstderr: {module_err}')
+    else:
+        module_env = json.loads(module_out)
 
-    # TODO: Possible old job file to stage up [".res", ".stt", ".prt", ".mdl", ".abq", ".sel", ".pac", ".odb", ".sim"]
     # Assemble command line
     abaqus_cmd = ["ABQLauncher",
                   f'job={JOB_NAME}',
@@ -101,35 +118,44 @@ try:
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
 
-    # Set environmental variables
-    local_env = dict()
-    local_env['mp_host_list'] = mp_host_list
+    module_env['LSB_MCPU_HOSTS'] = LSB_MCPU_HOSTS
+    module_env['MPI_REMSH'] = 'ssh -x -q -o StrictHostKeyChecking=no'
+
+    print("==== BEGIN ENVIRONMENT DUMP ====")
+    for param in os.environ.keys():
+        print(f'{param}: {os.environ[param]}')
+    print("==== END ENVIRONMENT DUMP ====")
 
     # Launch application
     # TODO: Encapsulate process in processManager
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=local_env)
+    print(*abaqus_cmd, sep=" ")
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=os.module_env, stdout=subprocess.PIPE)
+    (module_out, module_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
     if abaqus_exit_status == 0:
-        print("Abaqus was ran successfully")
+        print("Abaqus was run successfully")
         exit_status = "Done"
     else:
-        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}')
+        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {module_out}\nstderr: {module_err}')
         exit_status = "Exited"
 
     # Stage back result files files to local scratch
     files_to_stage_back = [
         {{job.outputfiles}}
     ]
+    files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
     try:
+        print(f'Staging back:')
         for stage_back_file in files_to_stage_back:
-            for source_file in glob.glob(stage_back_file):
-                target_file = os.path.join(STARTDIR, os.path.basename(source_file))
-                shutil.copy(source_file, target_file)
-                # TODO: Check what this line actually does
-                # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
+            print(f'\t - {stage_back_file}')
+            target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
+            shutil.copy(stage_back_file, target_file)
+            # TODO: Check what this line actually does
+            # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Stage back failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
+
 finally:
     # CLEANING
     print(f'Removing files in directory /scratch/{USER} at cluster node {HOSTNAME}')

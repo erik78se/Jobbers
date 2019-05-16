@@ -38,7 +38,6 @@ import re
 import subprocess
 import glob
 import shutil
-import pwd
 import json
 
 
@@ -58,7 +57,7 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = 6
+HOST_SPLIT = {{job.host_split}}
 if 'SLURM_PACK_SIZE' in os.environ:
     for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
         cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
@@ -142,11 +141,13 @@ try:
 
     # Stage back result files files to local scratch
     files_to_stage_back = [
+        {{job.outputfiles}}
     ]
     files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
     try:
+        print(f'Staging back:')
         for stage_back_file in files_to_stage_back:
-            print(f'Staging: {stage_back_file}')
+            print(f'\t - {stage_back_file}')
             target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
             shutil.copy(stage_back_file, target_file)
             # TODO: Check what this line actually does
@@ -163,28 +164,3 @@ finally:
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
 
-#INPUT={{job.inpfile}}               # The inpfile parameter
-# (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
-
-# change to SCRATCH ({{job.scratch}})
-#module use ~/.modules
-#mkdir -p {{job.scratch}}
-#cd {{job.scratch}}
-
- # Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH
-#if [[ ! -r "$INPUT" || "$SLURM_SUBMIT_DIR/$INPUT" -nt "$INPUT" ]] ; then
-#   cp "$SLURM_SUBMIT_DIR/$INPUT" .
-#fi
-
-# tell the system which version of abaqus you want to use (ABQLauncher)
-#module load {{job.abaqus_module.module}}
-#unset SLURM_GTIDS            # this is odd, but it has to be (!)
-
-# Start ABAQUS/Standard
-#ABQLauncher job="$SLURM_JOB_NAME" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
-
-# Start ABAQUS/Explicit (remove # in front and add one to the standard call)
-# ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi
-
-# Start Abaqus non parallel
-# ABQLauncher job="$PROJECT" analysis input="$INPUT" interactive
