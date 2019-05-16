@@ -128,8 +128,14 @@ def _workflow_solve_parallel(template,inpfile,output):
     solvejob = SolveJob(inpfile)
 
     # If job is a restart read job, ask for restart files.
-    if solvejob.inpfile.restart_read:
-        solvejob.restartfile = ask_restart()
+    if inpfile.restart_read:
+        restartfile = ask_restart()
+        solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
+        solvejob.inpfile.restart_file = solvejob.restartjobname
+        print('setting solvejob.restartjobname to ' + solvejob.restartjobname)
+        solvejob.inpfile.files_to_stage()
+    else:
+        print('this is not a restart_read workflow_solve_parallell job')
 
     ##################################
     ## Collect needed resources.
@@ -155,7 +161,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     solvejob.partitions = ask_partitions()['partitions']
 
     solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
-    
+
     ##########################################
     # Info gathered, dispatch to job rendering
     ##########################################

@@ -55,6 +55,7 @@ def children(infile):
 
                 if restartr:
                     infile.restart_read = True
+                    print('debug: found restart_read in ' + str(infile.file))
 
                 if restartw:
                     infile.restart_write = True

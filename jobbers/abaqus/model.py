@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import os
 
 
 class SolveJob:
@@ -36,6 +37,7 @@ class GenericJob:
         self.cpus = None
         self.ntasks_per_node = None
         self.partitions = []
+        self.restartjobname = None
 
 
 class Inpfile:
@@ -48,6 +50,8 @@ class Inpfile:
         self.random_response = None
         self.input_files = []
         self.other_files = []
+        self.restart_files = []
+        self.restart_file = None
 
         # input regexp
         self.input_regexp = re.compile(r'^\s*\*\w.*input\s*=\s*([\w\./-]+)\s*$', re.IGNORECASE)
@@ -74,11 +78,28 @@ class Inpfile:
         for file in self.input_files:
             files_to_stage_up.append(file)
 
-        # Append include files
+        # Append other files
         for file in self.other_files:
             files_to_stage_up.append(file)
 
+        # Append restart files
+        if self.restart_file:
+            print('appending restart files')
+            self.__get_restart_files__()
+            for file in self.restart_files:
+                files_to_stage_up.append(file)
+        else:
+            print('no restart file to stage up')
+
         return files_to_stage_up
+
+    def __get_restart_files__(self):
+        """
+        TODO: write
+        """
+        for ext in [".res", ".stt", ".prt", ".mdl", ".abq", ".sel", ".pac", ".odb", ".sim"]:
+            if os.path.isfile(self.restart_file + ext):
+                self.restart_files.append(os.path.abspath(self.restart_file + ext))
 
     def __str__(self):
         return "Filename: {}\n" \
