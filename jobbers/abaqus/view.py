@@ -5,7 +5,7 @@ import inquirer
 import os
 import jobbers
 import glob
-
+from jobbers import config
 
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """
@@ -46,14 +46,13 @@ def ask_scratch():
 
     questions = [
         inquirer.Path('scratch',
-                      message="Path to scratch directory (absolute path)",
+                      message="Path to shared scratch directory (absolute path)",
                       path_type=inquirer.Path.DIRECTORY,
-                      default="/cluster/sesonas13/$SLURM_JOB_USER/$SLURM_JOB_ID",
+                      default=config['slurm']['shared_scratch'].get(),
                       exists=False,),
     ]
 
     return inquirer.prompt(questions)
-
 
 def ask_timelimit():
     """ Returns a dict with the answers for questions about timelimit """
@@ -69,11 +68,12 @@ def ask_timelimit():
 
 def ask_partitions():
     """ Returns a dict with the answers for questions about SLURM partitions """
+
     questions = [
         inquirer.Checkbox('partitions',
                           message="Use SLURM partitions",
-                          choices=['partition1','partition2','default'],
-                          default=['partition1'],), ]
+                          choices=config['slurm']['partitions'].get(),
+                          default=config['slurm']['default_partition'].get()) ]
     return inquirer.prompt(questions)
 
 
@@ -184,10 +184,11 @@ def ask_abaqus_licenses_parallel(default_volume):
 
 def ask_abaqus_module():
     """ Ask for abaqus lmod module """
+    m = config['abaqus']['envmodules'].get()
     q = [inquirer.List('module',
                         message="Select abaqus module",
-                        choices=['abaqus/2018-2','abaqus/2019-G'],
-                        default='abaqus/2018-2'),
+                        choices=m,
+                        default=m[0] ),
           ]
 
     return inquirer.prompt(q)

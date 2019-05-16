@@ -2,6 +2,8 @@
 Jobbers is a Python package that produces so called application "job-scripts".
 Those scripts are then ready to be submitted into SLURM.
 
+User local config is located at: ~/.config/Jobbers/config.yaml
+
 # Install snap from snapcraft.io
 You can install the software with snap from snapstore:
 ```sudo snap install jobbers --devmode --edge```
@@ -59,5 +61,5 @@ Packages (tar.gz)  are built in "dist/"
 
 ## Install local package with pip
 ```bash
-pip install dist/Jobber-0.1.dev0-py3-none-any.whl
+pip install dist/Jobbers-0.1.dev0-py3-none-any.whl
 ```

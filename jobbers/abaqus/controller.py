@@ -4,10 +4,11 @@ import jinja2    # http://jinja.pocoo.org/docs/2.10/
 from pprint import pprint
 import click
 import jobbers
-import jobbers.abaqus.inpfile as inpfile
+from jobbers.abaqus.inpfileparse import traverse
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
-from jobbers.abaqus.model import ( SolveJob, GenericJob)
+from jobbers.abaqus.model import ( SolveJob, GenericJob, Inpfile)
 from jobbers.abaqus.view import *
+from jobbers import config
 
 
 @click.command()
@@ -21,7 +22,10 @@ from jobbers.abaqus.view import *
               type=click.Path(exists=True),
               help="User supplied .inp file for abaqus")
 def cli(output,template,inp):
-    """Processes questions and writes to file
+    """Processes questions and writes an abaqus slurm to file
+
+    User can override default config in ~/.config/Jobbers/config.yaml
+    it will take precedence over package defaults.
 
     Example usage: 
 
@@ -45,38 +49,56 @@ def cli(output,template,inp):
     wf = ask_workflow()['workflow']
     
     if wf == 'solve':
+
+        # Collect "no such file"
+        no_such_files = []
+        
         if not inp:
             inp = ask_inp()['inpfile']
 
-        # Parse the inp
+        inpFile = Inpfile(filename=inp)
+
+        input_deck = traverse(inpFile)
+
+        # Visualize missing files
+        for i in input_deck:
+            if not i.file.is_file():
+                print("--- Unable to locate from input file (No such file?) ---")
+                print(i)
+                no_such_files.append(i)
         
-        # If eigenfreq == false (We can run with MPI if no eigen)
-        if True:
-            _workflow_solve_parallel(template,inp,output)
+        # If eigenfrequency == False then We can run with MPI.
+        if not input_deck[0].eigenfrequency:   
+
+            _workflow_solve_parallel(template,inpFile,output)
+            
         else:
-            _workflow_solve(template,inp,output)
+            
+            _workflow_solve(template,inpFile,output)
+            
     elif wf == 'debug':
+        
         _workflow_debug()
+        
     elif wf == 'generic':
+        
         _workflow_generic(template,output)
+        
     else:
-        print("Not implemented")
         raise("Not implemented")
 
-def _workflow_solve(template,inp,output):
+def _workflow_solve(template,inpfile,output):
     """
     The solve workflow.
     """
-    solvejob = SolveJob(inp)
+    solvejob = SolveJob(inpfile)
 
     ##################################
     ## Collect needed resources.
     ##################################
     solvejob.abaqus_module = ask_abaqus_module()
 
-    solvejob.generic_resources = ask_generic_resources()
-
-    solvejob.cpus = ask_cpus_int()
+    solvejob.cpus = ask_cpus_int()['cpus']
 
     lics_needed = calculate_abaqus_licenses( solvejob.cpus )
     
@@ -89,19 +111,20 @@ def _workflow_solve(template,inp,output):
     ##########################################
 
     templates_dir=os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
-
+    
     if template:
         solvejob.template = template
     else:
-        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-template.j2' )
+        solve_template=config['abaqus']['solve_template'].get()
+        solvejob.template="{}/{}".format( templates_dir, solve_template )
 
     _render_to_out(solvejob,output)
 
-def _workflow_solve_parallel(template,inp,output):
+def _workflow_solve_parallel(template,inpfile,output):
     """
     The solve-parallel sub workflow.
     """
-    solvejob = SolveJob(inp)
+    solvejob = SolveJob(inpfile)
 
     ##################################
     ## Collect needed resources.
@@ -126,7 +149,7 @@ def _workflow_solve_parallel(template,inp,output):
     
     solvejob.partitions = ask_partitions()['partitions']
 
-    solvejob.timelimit = ask_timelimit()['timelimit']
+    solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
     
     ##########################################
     # Info gathered, dispatch to job rendering
@@ -137,7 +160,8 @@ def _workflow_solve_parallel(template,inp,output):
     if template:
         solvejob.template = template
     else:
-        solvejob.template="{}/{}".format( templates_dir, 'abaqus-solve-parallel-template.j2' )
+        solve_par_template=config['abaqus']['solve_parallel_template'].get()
+        solvejob.template="{}/{}".format( templates_dir, str(solve_par_template) )
 
     _render_to_out(solvejob,output)
     

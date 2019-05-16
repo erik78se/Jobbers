@@ -19,19 +19,19 @@ def children(infile):
         for the root node (infile).
         """
         r = []
-        if not Path(infile.filename).is_file():
-            print("Not found: " + str(infile.filename), file=sys.stderr)
+        if not Path(infile.file).is_file():
+            print("Not found: " + str(infile.file), file=sys.stderr)
             return []
 
         # Set defaults for the attributes
         infile.restart_read = False
         infile.restart_write = False
         infile.random_response = False
-        infile.eigenfreqency = False
+        infile.eigenfrequency = False
         
         # Scan for items we need
         # TODO: Performance!
-        with open(infile.filename, 'r') as fh:
+        with open(infile.file, 'r') as fh:
             for line in fh:
                 line = line.strip()
 
@@ -44,7 +44,7 @@ def children(infile):
 
                 if include:
                     c = include.group(1).strip()
-                    child = Inpfile(filename=Path(c))
+                    child = Inpfile(filename=c)
                     infile.input_files.append(child)
                     r.append(child)
 
@@ -59,7 +59,7 @@ def children(infile):
                     infile.restart_write = True
 
                 if eigen:
-                    infile.eigenfreqency = True
+                    infile.eigenfrequency = True
 
                 if random:
                     infile.random_response = True

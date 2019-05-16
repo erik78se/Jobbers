@@ -6,3 +6,4 @@ MarkupSafe==1.1.0
 readchar==2.0.1
 six==1.12.0
 click
+confuse

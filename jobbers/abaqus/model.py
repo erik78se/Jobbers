@@ -6,7 +6,7 @@ class SolveJob:
     """ Model for a abaqus Job for solver """
     def __init__(self,inp=None):
         self.jobname = None
-        self.inpfile = inp  # Inputfile for this job
+        self.inpfile = Inpfile(filename=str(inp.file))  # Inputfile for this job
         self.template = None
         self.timelimit = ""
         self.scratch = '/tmp'
@@ -41,10 +41,10 @@ class GenericJob:
 class Inpfile:
     """ Model for an .inp files """
     def __init__(self, filename=None):
-        self.filename = filename
+        self.file = Path(filename)
         self.restart_read = None
         self.restart_write = None
-        self.eigenfreqency = None
+        self.eigenfrequency = None
         self.random_response = None
         self.input_files = []
         self.other_files = []
@@ -67,7 +67,7 @@ class Inpfile:
                "Eigen: {}\n" \
                "RandomeResp: {}\n" \
                "Inputs: {}\n" \
-               "Others: {}".format(self.filename,
+               "Others: {}".format(self.file,
                                    self.restart_read,
                                    self.restart_write,
                                    self.eigenfreqency,
@@ -76,4 +76,4 @@ class Inpfile:
                                    self.other_files)
 
     def __repr__(self):
-        return "<Inpfile: %s>" % str(self.filename)
+        return "<Inpfile: %s>" % str(self.file)

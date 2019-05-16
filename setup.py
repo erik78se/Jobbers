@@ -1,9 +1,9 @@
 import setuptools
 
 setuptools.setup(
-    name='Jobber',
+    name='Jobbers',
     version='0.4dev',
-    install_requires=['jinja2','inquirer','Click'],
+    install_requires=['jinja2','inquirer','Click', 'confuse'],
     packages=setuptools.find_packages(),
     license='GPLv3',
     long_description=open('README.md').read(),
