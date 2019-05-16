@@ -1,15 +1,15 @@
 #!/bin/python3
 ## Generic information
 # Job name
-#SBATCH -J {{job.generic_resources.jobname}}
+#SBATCH -J {{job.jobname}}
 # Job time limit in minutes
-#SBATCH -t {{job.generic_resources.timelimit}}
-# User name
-#SBATCH -A {{user_name}}
-# Sed status mail to user at start and end
+#SBATCH -t {{job.timelimit}}
+# TODO: Name of account (not user) for accounting.
+#SBATCH -A abaqus
+# TODO: VERIFY! an email is send at the start and end
 #SBATCH --mail-type=ALL
-# List of partitions available for submission
-#SBATCH --partition {{job.generic_resources.partitions|join(",")}}
+# which partitions to consider
+#SBATCH --partition {{job.partitions|join(",")}}
 ##  Jobpack 1
 # Nodes to use - always one master node
 #SBATCH -N 1
@@ -38,6 +38,7 @@ import re
 import subprocess
 import glob
 import shutil
+import pwd
 import json
 
 
@@ -57,7 +58,7 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = {{job.host_split}}
+HOST_SPLIT = 6
 if 'SLURM_PACK_SIZE' in os.environ:
     for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
         cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
@@ -86,7 +87,7 @@ try:
 
     # Stage required files to local scratch
     files_to_stage_up = [
-        {{job.inputfile}}
+        '{{job.inpfile.file}}'
     ]
     try:
         for stage_up_file in files_to_stage_up:
@@ -112,7 +113,7 @@ try:
     # Assemble command line
     abaqus_cmd = ['ABQLauncher',
                   f'job={JOB_NAME}',
-                  f'input={os.path.basename("{{job.inpfile}}")}',
+                  f'input={os.path.basename("{{job.inpfile.file}}")}',
                   'interactive',
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
@@ -128,7 +129,7 @@ try:
     # Launch application
     # TODO: Encapsulate process in processManager
     print(*abaqus_cmd, sep=" ")
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=os.module_env, stdout=subprocess.PIPE)
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=module_env, stdout=subprocess.PIPE)
     (module_out, module_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
@@ -141,7 +142,6 @@ try:
 
     # Stage back result files files to local scratch
     files_to_stage_back = [
-        {{job.outputfiles}}
     ]
     files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
     try:
@@ -163,4 +163,3 @@ finally:
             shutil.rmtree(local_scratch_folder)
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
-

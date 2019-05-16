@@ -90,7 +90,7 @@ class Inpfile:
                "Others: {}".format(self.file,
                                    self.restart_read,
                                    self.restart_write,
-                                   self.eigenfreqency,
+                                   self.eigenfrequency,
                                    self.random_response,
                                    self.input_files,
                                    self.other_files)

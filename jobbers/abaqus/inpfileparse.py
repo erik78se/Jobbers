@@ -31,7 +31,8 @@ def children(infile):
         
         # Scan for items we need
         # TODO: Performance!
-        with open(infile.file, 'r') as fh:
+        # In Python 3.5 and 3.6, pathlib stuff (infile.file) must be converted to string
+        with open(str(infile.file), 'r') as fh:
             for line in fh:
                 line = line.strip()
 
