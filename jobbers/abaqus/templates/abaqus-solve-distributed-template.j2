@@ -125,6 +125,11 @@ abaqus_cmd = ['ABQLauncher',
               f'cpus={str(cpus)}',
               f'mp_host_split={str(HOST_SPLIT)}']
 
+# Assign equivalent to mp_host_list to env
+module_env['LSB_MCPU_HOSTS'] = LSB_MCPU_HOSTS
+# Assign equivalent to mp_rsh_command which is not respected by Abaqus
+module_env['MPI_REMSH'] = 'ssh -x -q -o StrictHostKeyChecking=no'
+
 # Set environmental variables - skip for now and use abaqus_v6.env
 module_env['MPI_REMSH'] = 'ssh -x -q -o StrictHostKeyChecking=no'
 with open(f'{local_scratch_folder}/abaqus_v6.env', 'a') as abq_fh:
