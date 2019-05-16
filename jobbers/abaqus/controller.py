@@ -120,11 +120,16 @@ def _workflow_solve(template,inpfile,output):
 
     _render_to_out(solvejob,output)
 
+
 def _workflow_solve_parallel(template,inpfile,output):
     """
     The solve-parallel sub workflow.
     """
     solvejob = SolveJob(inpfile)
+
+    # If job is a restart read job, ask for restart files.
+    if solvejob.inpfile.restart_read:
+        solvejob.restartfile = ask_restart()
 
     ##################################
     ## Collect needed resources.
@@ -155,7 +160,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     # Info gathered, dispatch to job rendering
     ##########################################
 
-    templates_dir=os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
+    templates_dir = os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
 
     if template:
         solvejob.template = template
