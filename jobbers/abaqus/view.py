@@ -7,6 +7,7 @@ import jobbers
 import glob
 from jobbers import config
 
+
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """
     if not path:
@@ -15,6 +16,16 @@ def _list_inputfiles(path=None):
     inputfiles = glob.glob(os.path.join(path, '*.inp'))
     
     return inputfiles
+
+
+def _list_restartfiles(path=None):
+    """ Returns a list of possible restart files in a directory ( default: pwd) """
+    if not path:
+        path = os.getcwd()
+
+    restart_files = glob.glob(os.path.join(path, '*.res'))
+
+    return restart_files
 
 
 def ask_jobname():
@@ -55,12 +66,12 @@ def ask_scratch():
     return inquirer.prompt(questions)
 
 def ask_timelimit():
-    """ Returns a dict with the answers for questions about timelimit """
+    """ Returns a dict with the answers for questions about time limit """
     questions = [
         inquirer.List('timelimit',
-                          message="Set timelimit (hours)",
-                          choices=[1,2,3,4,5,6,7,8,12,24],
-                          default=1,),
+                          message="Set time limit (hours)",
+                          choices=[1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 48, 72, 96, 144],
+                          default=3,),
     ]
     
     return inquirer.prompt(questions)
@@ -83,7 +94,7 @@ def ask_cpus_int():
     questions = [
         inquirer.List('cpus',
                       message="Needed cpus",
-                      choices=[1,2,4,8,16,32,64],),
+                      choices=[1, 2, 4, 8, 16, 32, 64],),
     ]
     
     return inquirer.prompt(questions)
@@ -95,7 +106,7 @@ def ask_nodes():
     questions = [
         inquirer.List('nodes',
                       message="Max nodes:",
-                      choices=[1,2,3],
+                      choices=[1, 2, 3],
                       default=2),
     ]
     
@@ -111,8 +122,8 @@ def ask_workflow():
                       message="What do you want to do?",
                       choices=[
                           ('Debug session', 'debug'),
-                          ('Generic script submission','generic'),
-                          ('Solve problem','solve'),],
+                          ('Generic script submission', 'generic'),
+                          ('Solve problem', 'solve'), ],
                       default='solve'),
 
         # inquirer.Path('inputfile',
@@ -133,7 +144,21 @@ def ask_inp():
                       message=".inp file to use (absolute path)",
                       path_type=inquirer.Path.FILE,
                       exists=True,
-                      default=next(iter(_list_inputfiles()), None )),
+                      default=next(iter(_list_inputfiles()), None)),
+    ]
+
+    return inquirer.prompt(questions)
+
+
+def ask_restart():
+    """ Returns a dict with the answers """
+
+    questions = [
+        inquirer.Path('restartfile',
+                      message=".res file to use (absolute path)",
+                      path_type=inquirer.Path.FILE,
+                      exists=True,
+                      default=next(iter(_list_restartfiles()), None)),
     ]
 
     return inquirer.prompt(questions)
@@ -141,7 +166,7 @@ def ask_inp():
 
 def ask_submodel_odb():
     """ Ask for the supplementary ODB file used by a restart """
-    q = [ inquirer.Path('filename',
+    q = [inquirer.Path('filename',
                         message="Path to submodel ODB file (absolute)",
                         path_type=inquirer.Path.FILE,
                         default='submodel.odb',
@@ -168,7 +193,6 @@ def ask_abaqus_licenses():
 def ask_abaqus_licenses_parallel(default_volume):
     """ Ask for abaqus licenses in multiples of max(node-cpus) """
 
-    
     q = [ inquirer.List('license',
                         message="Select license",
                         choices=['abaqus@flex_host'],
