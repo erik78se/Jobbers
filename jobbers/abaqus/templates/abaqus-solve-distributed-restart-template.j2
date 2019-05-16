@@ -85,9 +85,8 @@ try:
         sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
 
     # Stage required files to local scratch
-    files_to_stage_up = [
-        {{job.inputfile}}
-    ]
+    files_to_stage_up = {{job.inputfile.files_to_stage()}}
+
     try:
         for stage_up_file in files_to_stage_up:
             for source_file in glob.glob("%s" % stage_up_file):
