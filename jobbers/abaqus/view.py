@@ -3,6 +3,7 @@
 #
 import inquirer
 import os
+import sys
 import jobbers
 import glob
 from jobbers import config
@@ -12,8 +13,17 @@ def _list_inputfiles(path=None):
     if not path:
         path = os.getcwd()
 
-    inputfiles = glob.glob(os.path.join(path, '*.inp'))
-    
+    tempfiles = glob.glob(os.path.join(path, '*.inp'))
+
+    if not tempfiles:
+        print('No inputfile (.inp) found!')
+        sys.exit(1)
+
+    inputfiles = []
+    for item in tempfiles:
+        if os.path.isfile(item):
+            inputfiles.append(item)
+
     return inputfiles
 
 def ask_jobname():
@@ -125,11 +135,9 @@ def ask_inp():
     """ Returns a dict with the answers """
 
     questions = [
-        inquirer.Path('inpfile',
+        inquirer.List('inpfile',
                       message=".inp file to use (absolute path)",
-                      path_type=inquirer.Path.FILE,
-                      exists=True,
-                      default=next(iter(_list_inputfiles()), None )),
+                      choices=_list_inputfiles()),
     ]
 
     return inquirer.prompt(questions)
