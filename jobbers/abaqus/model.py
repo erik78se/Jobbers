@@ -59,7 +59,27 @@ class Inpfile:
         self._eigen_regexp = re.compile(r'^\s*\*FREQUENCY\s*', re.IGNORECASE)
         # random response
         self._random_re = re.compile(r'^\s\*RANDOM\s*.*RESPONSE', re.IGNORECASE)
-    
+
+    def files_to_stage(self):
+        """
+        Used to return all files required to run the job
+        :return: List of required files, excluding restart files.
+        """
+        files_to_stage_up = list()
+
+        # Append input file
+        files_to_stage_up.append(self.file)
+
+        # Append include files
+        for file in self.input_files:
+            files_to_stage_up.append(file)
+
+        # Append include files
+        for file in self.other_files:
+            files_to_stage_up.append(file)
+
+        return files_to_stage_up
+
     def __str__(self):
         return "Filename: {}\n" \
                "RestartRead: {}\n" \
