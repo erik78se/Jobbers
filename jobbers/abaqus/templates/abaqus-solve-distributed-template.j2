@@ -1,21 +1,21 @@
 #!/bin/python3
 ## Generic information
-# Job name
-#SBATCH -J {{job.generic_resources.jobname}}
-# Job time limit in minutes
-#SBATCH -t {{job.generic_resources.timelimit}}
-# User name
-#SBATCH -A {{user_name}}
-# Sed status mail to user at start and end
+# the job name:
+#SBATCH -J {{job.jobname}}
+# time limit in minutes
+#SBATCH -t {{job.timelimit}}
+# TODO: Name of account (not user) for accounting.
+#SBATCH -A abaqus
+# TODO: VERIFY! an email is send at the start and end
 #SBATCH --mail-type=ALL
-# List of partitions available for submission
-#SBATCH --partition {{job.generic_resources.partitions|join(",")}}
+# which partitions to consider
+#SBATCH --partition {{job.partitions|join(",")}}
 ##  Jobpack 1
-# Nodes to use - always one master node
+# Nodes to use - always one head node
 #SBATCH -N 1
-# Memory requirement on master node(cluster config?)
+# memory to reserve head node (clusterconfig?)
 #SBATCH --mem=700G
-# Licenses required, appointed to master job
+# licenses needed, appointed to master job
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
 # Exclusive execution on head node
 #SBATCH --exclusive
@@ -87,7 +87,7 @@ try:
 
     # Stage required files to local scratch
     files_to_stage_up = [
-        {{job.inputfile}}
+        '{{job.inpfile.file}}'
     ]
     try:
         for stage_up_file in files_to_stage_up:
@@ -113,7 +113,7 @@ try:
     # Assemble command line
     abaqus_cmd = ['ABQLauncher',
                   f'job={JOB_NAME}',
-                  f'input={os.path.basename("{{job.inpfile}}")}',
+                  f'input={os.path.basename("{{job.inpfile.file}}")}',
                   'interactive',
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
@@ -129,7 +129,7 @@ try:
     # Launch application
     # TODO: Encapsulate process in processManager
     print(*abaqus_cmd, sep=" ")
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=os.module_env, stdout=subprocess.PIPE)
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=module_env, stdout=subprocess.PIPE)
     (module_out, module_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
@@ -162,29 +162,3 @@ finally:
             shutil.rmtree(local_scratch_folder)
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
-
-#INPUT={{job.inpfile}}               # The inpfile parameter
-# (Reference job: ./SIMULIA2018doc/English/SIMAINPRefResources/driveshaft.inp)
-
-# change to SCRATCH ({{job.scratch}})
-#module use ~/.modules
-#mkdir -p {{job.scratch}}
-#cd {{job.scratch}}
-
- # Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH
-#if [[ ! -r "$INPUT" || "$SLURM_SUBMIT_DIR/$INPUT" -nt "$INPUT" ]] ; then
-#   cp "$SLURM_SUBMIT_DIR/$INPUT" .
-#fi
-
-# tell the system which version of abaqus you want to use (ABQLauncher)
-#module load {{job.abaqus_module.module}}
-#unset SLURM_GTIDS            # this is odd, but it has to be (!)
-
-# Start ABAQUS/Standard
-#ABQLauncher job="$SLURM_JOB_NAME" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=threads
-
-# Start ABAQUS/Explicit (remove # in front and add one to the standard call)
-# ABQLauncher job="$PROJECT" analysis input="$INPUT" cpus=$SLURM_NTASKS interactive mp_mode=mpi
-
-# Start Abaqus non parallel
-# ABQLauncher job="$PROJECT" analysis input="$INPUT" interactive
