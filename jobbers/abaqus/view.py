@@ -3,25 +3,21 @@
 #
 import inquirer
 import os
-import sys
 import jobbers
-import glob
+import pathlib
+#import glob
 from jobbers import config
 
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """
     if not path:
-        path = os.getcwd()
+        path = pathlib.Path.cwd()
 
-    tempfiles = glob.glob(os.path.join(path, '*.inp'))
-
-    if not tempfiles:
-        print('No inputfile (.inp) found!')
-        sys.exit(1)
+    tempfiles = list(path.glob('*.inp'))
 
     inputfiles = []
     for item in tempfiles:
-        if os.path.isfile(item):
+        if pathlib.Path.is_file(item):
             inputfiles.append(item)
 
     return inputfiles
@@ -134,12 +130,18 @@ def ask_workflow():
 def ask_inp():
     """ Returns a dict with the answers """
 
-    questions = [
-        inquirer.List('inpfile',
+    l = _list_inputfiles()
+    questions = None
+    if not l:
+        questions = [ inquirer.Path('inpfile',
+                        message="Input file (absolute path)",
+                        path_type=inquirer.Path.FILE,
+                        exists=True), ]
+    else:
+        questions = [ inquirer.List('inpfile',
                       message=".inp file to use (absolute path)",
                       choices=_list_inputfiles()),
-    ]
-
+                        ]
     return inquirer.prompt(questions)
 
 
