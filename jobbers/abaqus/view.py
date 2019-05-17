@@ -45,8 +45,8 @@ def ask_memory():
     questions = [
         inquirer.Text('memory',
                       message="Max Memory needed (GB)",
-                      validate=lambda _, x: 0 <= int(x) <= 1000,
-                      default='10'),
+                      validate=lambda _, x: 0 <= int(x) <= 1500,
+                      default='256'),
         ]
 
     return inquirer.prompt(questions)
@@ -65,13 +65,14 @@ def ask_scratch():
 
     return inquirer.prompt(questions)
 
+
 def ask_timelimit():
     """ Returns a dict with the answers for questions about time limit """
     questions = [
         inquirer.List('timelimit',
-                          message="Set time limit (hours)",
-                          choices=[1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 48, 72, 96, 144],
-                          default=3,),
+                      message="Set time limit (hours)",
+                      choices=[1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 48, 72, 96, 144],
+                      default=3,),
     ]
     
     return inquirer.prompt(questions)
@@ -84,7 +85,7 @@ def ask_partitions():
         inquirer.Checkbox('partitions',
                           message="Use SLURM partitions",
                           choices=config['slurm']['partitions'].get(),
-                          default=config['slurm']['default_partition'].get()) ]
+                          default=config['slurm']['default_partition'].get())]
     return inquirer.prompt(questions)
 
 
@@ -106,8 +107,8 @@ def ask_nodes():
     questions = [
         inquirer.List('nodes',
                       message="Max nodes:",
-                      choices=[1, 2, 3],
-                      default=2),
+                      choices=[1, 2, 3, 4],
+                      default=1),
     ]
     
     return inquirer.prompt(questions)
@@ -165,27 +166,26 @@ def ask_restart():
 
 
 def ask_submodel_odb():
-    """ Ask for the supplementary ODB file used by a restart """
+    """ Ask for the supplementary ODB file used by a submodel """
     q = [inquirer.Path('filename',
-                        message="Path to submodel ODB file (absolute)",
-                        path_type=inquirer.Path.FILE,
-                        default='submodel.odb',
-                        exists=False), ]
+                       message="Path to submodel ODB file (absolute)",
+                       path_type=inquirer.Path.FILE,
+                       default='submodel.odb',
+                       exists=False), ]
     
     return inquirer.prompt(q)
 
 
 def ask_abaqus_licenses():
     """ Ask for abaqus licenses """
-    q = [ inquirer.List('license',
-                        message="Select license",
-                        choices=['abaqus@flex_host'],
-                        default='abaqus@flex_host'),
-          inquirer.Text('volume',
-                        message="How many licenses of {license}",
-                        validate=lambda _, x: 0 <= int(x) <= 1000,
-                        default='30'),
-          ]
+    q = [inquirer.List('license',
+                       message="Select license",
+                       choices=['abaqus@flex_host'],
+                       default='abaqus@flex_host'),
+         inquirer.Text('volume',
+                       message="How many licenses of {license}",
+                       validate=lambda _, x: 0 <= int(x) <= 1000,
+                       default='30'), ]
           
     return inquirer.prompt(q)
 
@@ -193,15 +193,14 @@ def ask_abaqus_licenses():
 def ask_abaqus_licenses_parallel(default_volume):
     """ Ask for abaqus licenses in multiples of max(node-cpus) """
 
-    q = [ inquirer.List('license',
-                        message="Select license",
-                        choices=['abaqus@flex_host'],
-                        default='abaqus@flex_host'),
-          inquirer.List('volume',
-                        message="How many licenses of {license}",
-                        choices=[36,72,108],
-                        default=72),
-    ]
+    q = [inquirer.List('license',
+                       message="Select license",
+                       choices=['abaqus@flex_host'],
+                       default='abaqus@flex_host'),
+         inquirer.List('volume',
+                       message="How many licenses of {license}",
+                       choices=[36, 72, 108],
+                       default=72), ]
           
     return inquirer.prompt(q)
 
@@ -210,9 +209,8 @@ def ask_abaqus_module():
     """ Ask for abaqus lmod module """
     m = config['abaqus']['envmodules'].get()
     q = [inquirer.List('module',
-                        message="Select abaqus module",
-                        choices=m,
-                        default=m[0] ),
-          ]
+                       message="Select abaqus module",
+                       choices=m,
+                       default=m[0]), ]
 
     return inquirer.prompt(q)
