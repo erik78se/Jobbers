@@ -1,0 +1,56 @@
+#!/bin/bash
+
+#SBATCH -J {{ job.jobname }}
+#SBATCH -p {{ job.partitions }}
+#SBATCH -t {{ job.timelimit }}                # timelimit in minutes
+#SBATCH --mail-type=END      # an email is send at the end of the job
+#SBATCH -N 1                 # Use 1 node for femfat jobs
+#SBATCH --partition {{job.partitions|join(",")}}   # which partitions to consider
+
+workdir=$SLURM_SUBMIT_DIR
+scratch={{ job.scratch }}
+mkdir -p {{ job.scratch }}
+
+{{ start }}
+
+# unset SLURM_GTIDS (Seems abaqus crashes when this is set)
+unset SLURM_GTIDS
+
+export MAGNAECS_LICENSE_PATH=""
+
+INPUT=$(basename {{ job.ffjfile }}) 
+
+
+# Copy INPUT into SCRATCH, if it is newer than the one in SCRATCH #TODO: Needs to be fixed
+if [[ ! -r "$scratch/$INPUT" || "$INPUT" -nt "$scratch/$INPUT" ]] ; then
+   cp "$INPUT" $scratch
+fi
+
+
+# SHARED DIR (All nodes sees this data)
+if [ -z cluster_scratch_root ]; then
+        cluster_scratch_root="/tmp"
+fi
+
+# Get availabe port
+read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+while :
+do
+        PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
+        ss -lpn | grep -q ":$PORT " || break
+done
+
+# Need to create a virtual framebuffer for femfat
+Xvfb :${PORT} -terminate -ac -screen 0 800x600x8 &
+
+
+module load {{ job.femfat_module.module }}
+
+# Work from shared scratch dir
+cd $scratch
+
+femfat -dsp=localhost:${PORT} -job={{ job.ffjfile.name }}
+ExitStatus=$?
+
+exit $ExitStatus
+

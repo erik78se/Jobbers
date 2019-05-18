@@ -5,3 +5,4 @@ include requirements.txt
 include snap/snapcraft.yaml
 include jobbers/config_default.yaml
 recursive-include jobbers/abaqus/templates *
+recursive-include jobbers/femfat/templates *
