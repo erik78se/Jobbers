@@ -12,4 +12,8 @@ abaqus:
   envmodules:
     - 'abaqus/2018-2'
     - 'abaqus/2019-G'
-    
+
+femfat:
+  template: 'femfat_slurm.j2'
+  envmodules:
+    - 'femfat/1'
