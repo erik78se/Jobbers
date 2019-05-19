@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
 import inquirer  # https://pypi.org/project/inquirer/
-import jinja2    # http://jinja.pocoo.org/docs/2.10/
 import click
 import jobbers
+from jobbers.templating import render_to_out
 from jobbers.femfat.model import ( FemfatJob)
 from jobbers.femfat.view import *
 from jobbers import config
@@ -99,7 +99,7 @@ def _workflow_run(template,ffjfile,output):
         femfat_template=config['femfat']['template'].get()
         femfatjob.template="{}/{}".format( templates_dir, femfat_template )
 
-    _render_to_out(femfatjob,output)
+    render_to_out(femfatjob,output)
 
         
 def _workflow_debug():
@@ -109,17 +109,6 @@ def _workflow_debug():
     print("srun hostname")
     print("exit")
 
-    
-def _render_to_out(job,output):
-    """ render job to a output file
-    """
-    with open(job.template) as file_:
-    
-        template = jinja2.Template(file_.read())
-
-        o = template.render(job=job, template=job.template)
-        
-        output.write(o)
 
 if __name__ == '__main__':
     cli()
