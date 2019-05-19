@@ -11,4 +11,4 @@ def render_to_out(job,output):
 
         o = template.render(job=job, template=job.template)
         
-        return = output.write(o)
+        return output.write(o)
