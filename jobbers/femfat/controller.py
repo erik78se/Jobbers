@@ -1,11 +1,10 @@
 import os
 from pathlib import Path
-import inquirer  # https://pypi.org/project/inquirer/
 import click
-import jobbers
 from jobbers.templating import render_to_out
 from jobbers.femfat.model import ( FemfatJob)
 from jobbers.femfat.view import *
+import jobbers
 from jobbers import config
 
 

@@ -1,12 +1,7 @@
-#
-# Class for representing SLURM resources
-#
-import inquirer
 import os
-import jobbers
 import pathlib
-#import glob
 from jobbers import config
+import inquirer  # https://pypi.org/project/inquirer/
 
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """

@@ -1,5 +1,4 @@
 import os
-import inquirer  # https://pypi.org/project/inquirer/
 import click
 import jobbers
 from jobbers.abaqus.inpfileparse import traverse

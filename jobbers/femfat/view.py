@@ -1,8 +1,7 @@
-import inquirer
 import os
-import jobbers
 import pathlib
 from jobbers import config
+import inquirer
 
 def _list_inputfiles(path=None):
     """ Returns a list of ffj files in a directory ( default: pwd) """
