@@ -48,14 +48,16 @@ def children(infile):
                     child = Inpfile(filename=c)
                     infile.input_files.append(child)
                     r.append(child)
+                    print("DEBUG: found include file " + c + " in " + str(infile.file))
 
                 if otherfile:
                     o = include.group(1).strip()
                     infile.input_files.append(o)
+                    print("DEBUG: found other file in " + str(infile.file))
 
                 if restartr:
                     infile.restart_read = True
-                    print('debug: found restart_read in ' + str(infile.file))
+                    print('DEBUG: found restart_read in ' + str(infile.file))
 
                 if restartw:
                     infile.restart_write = True

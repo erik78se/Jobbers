@@ -86,11 +86,16 @@ try:
         sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
 
     # Stage required files to local scratch
-    files_to_stage_up = [
-        '{{job.inpfile.file}}'
-    ]
+    files_to_stage_up = {{job.inpfile.files_to_stage()}}
+#    [
+#        '{{job.inpfile.file}}'
+#    ]
     """
+        ####
+        {{job.inpfile.file}}'
+        ####
         '{{job.inpfile.restart_files}}'
+        ####
         '{{job.inpfile.files_to_stage()}}'
     """
     try:
@@ -119,6 +124,9 @@ try:
                   f'job={JOB_NAME}',
                   f'input={os.path.basename("{{job.inpfile.file}}")}',
                   'interactive',
+{% if job.restartjobname %}
+                  f'oldjob={{job.restartjobname}}',
+{% endif %}
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
 
