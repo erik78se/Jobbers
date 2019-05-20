@@ -11,7 +11,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'abaqus-jobber=jobbers.abaqus.controller:cli',
-            'femfat-jobber=jobbers.femfat:process',
+            'femfat-jobber=jobbers.femfat.controller:cli',
         ],
     },
     include_package_data = True

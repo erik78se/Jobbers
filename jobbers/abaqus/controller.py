@@ -1,7 +1,4 @@
 import os
-import inquirer  # https://pypi.org/project/inquirer/
-import jinja2    # http://jinja.pocoo.org/docs/2.10/
-from pprint import pprint
 import click
 import jobbers
 from jobbers.abaqus.inpfileparse import traverse
@@ -9,7 +6,7 @@ from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import ( SolveJob, GenericJob, Inpfile)
 from jobbers.abaqus.view import *
 from jobbers import config
-
+from jobbers.templating import render_to_out
 
 @click.command()
 @click.argument('output', type=click.File('w'))
@@ -118,7 +115,7 @@ def _workflow_solve(template,inpfile,output):
         solve_template=config['abaqus']['solve_template'].get()
         solvejob.template="{}/{}".format( templates_dir, solve_template )
 
-    _render_to_out(solvejob,output)
+    render_to_out(solvejob,output)
 
 
 def _workflow_solve_parallel(template,inpfile,output):
@@ -173,7 +170,7 @@ def _workflow_solve_parallel(template,inpfile,output):
         solve_par_template=config['abaqus']['solve_parallel_template'].get()
         solvejob.template="{}/{}".format( templates_dir, str(solve_par_template) )
 
-    _render_to_out(solvejob,output)
+    render_to_out(solvejob,output)
     
 
 def _workflow_generic(template,output):
@@ -187,7 +184,7 @@ def _workflow_generic(template,output):
     else:
         genericjob.template="{}/{}".format( templates_dir, 'abaqus-generic-template.j2' )
 
-    _render_to_out(genericjob,output)
+    render_to_out(genericjob,output)
 
 
         
@@ -197,18 +194,6 @@ def _workflow_debug():
     print("salloc -p debug -N 1")
     print("srun hostname")
     print("exit")
-
-
-def _render_to_out(job,output):
-    """ render job to a output file
-    """
-    with open(job.template) as file_:
-    
-        template = jinja2.Template(file_.read())
-
-        o = template.render(job=job, template=job.template)
-        
-        output.write(o)
 
 if __name__ == '__main__':
     cli()

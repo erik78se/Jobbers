@@ -1,31 +1,37 @@
-#
-# Class for representing SLURM resources
-#
-import inquirer
 import os
-import jobbers
-import glob
+import pathlib
 from jobbers import config
+import inquirer  # https://pypi.org/project/inquirer/
 
 
 def _list_inputfiles(path=None):
     """ Returns a list of inputfiles in a directory ( default: pwd) """
     if not path:
-        path = os.getcwd()
+        path = pathlib.Path.cwd()
 
-    inputfiles = glob.glob(os.path.join(path, '*.inp'))
-    
+    tempfiles = list(path.glob('*.inp'))
+
+    inputfiles = []
+    for item in tempfiles:
+        if pathlib.Path.is_file(item):
+            inputfiles.append(item)
+
     return inputfiles
 
 
 def _list_restartfiles(path=None):
     """ Returns a list of possible restart files in a directory ( default: pwd) """
     if not path:
-        path = os.getcwd()
+        path = pathlib.Path.cwd()
 
-    restart_files = glob.glob(os.path.join(path, '*.res'))
+    tempfiles = list(path.glob('*.res'))
 
-    return restart_files
+    restartfiles = []
+    for item in tempfiles:
+        if pathlib.Path.is_file(item):
+            restartfiles.append(item)
+
+    return restartfiles
 
 
 def ask_jobname():
@@ -140,12 +146,17 @@ def ask_workflow():
 def ask_inp():
     """ Returns a dict with the answers """
 
-    questions = [
-        inquirer.Path('inpfile',
+    l = _list_inputfiles()
+    questions = None
+    if not l:
+        questions = [ inquirer.Path('inpfile',
+                        message="Input file (absolute path)",
+                        path_type=inquirer.Path.FILE,
+                        exists=True), ]
+    else:
+        questions = [ inquirer.List('inpfile',
                       message=".inp file to use (absolute path)",
-                      path_type=inquirer.Path.FILE,
-                      exists=True,
-                      default=next(iter(_list_inputfiles()), None)),
+                      choices=_list_inputfiles()),
     ]
 
     return inquirer.prompt(questions)
@@ -154,12 +165,17 @@ def ask_inp():
 def ask_restart():
     """ Returns a dict with the answers """
 
-    questions = [
-        inquirer.Path('restartfile',
+    l = _list_restartfiles()
+    questions = None
+    if not l:
+        questions = [ inquirer.Path('restartfile',
+                        message="Restart file (absolute path)",
+                        path_type=inquirer.Path.FILE,
+                        exists=True), ]
+    else:
+        questions = [ inquirer.List('restartfile',
                       message=".res file to use (absolute path)",
-                      path_type=inquirer.Path.FILE,
-                      exists=True,
-                      default=next(iter(_list_restartfiles()), None)),
+                      choices=_list_restartfiles()),
     ]
 
     return inquirer.prompt(questions)
