@@ -34,13 +34,13 @@ def _list_restartfiles(path=None):
     return restartfiles
 
 
-def ask_jobname():
+def ask_jobname(default_name='my-job'):
     """ Returns a dict with the answers for questions about jobname """
 
     questions = [
         inquirer.Text('jobname',
                       message="Name of job",
-                      default='my-job'),
+                      default=default_name),
     ]
 
     return inquirer.prompt(questions)
@@ -133,11 +133,6 @@ def ask_workflow():
                           ('Solve problem', 'solve'), ],
                       default='solve'),
 
-        # inquirer.Path('inputfile',
-        #               message="Input file (absolute path)",
-        #               path_type=inquirer.Path.FILE,
-        #               exists=True,
-        #               default=next(iter(_list_inputfiles()), None )),
     ]
 
     return inquirer.prompt(questions)
@@ -146,18 +141,17 @@ def ask_workflow():
 def ask_inp():
     """ Returns a dict with the answers """
 
-    l = _list_inputfiles()
-    questions = None
-    if not l:
-        questions = [ inquirer.Path('inpfile',
-                        message="Input file (absolute path)",
-                        path_type=inquirer.Path.FILE,
-                        exists=True), ]
+    input_files = _list_inputfiles()
+    # questions = None
+    if not input_files:
+        questions = [inquirer.Path('inpfile',
+                                   message="Input file (absolute path)",
+                                   path_type=inquirer.Path.FILE,
+                                   exists=True), ]
     else:
-        questions = [ inquirer.List('inpfile',
-                      message=".inp file to use (absolute path)",
-                      choices=_list_inputfiles()),
-    ]
+        questions = [inquirer.List('inpfile',
+                                   message="Select input deck, *.inp file",
+                                   choices=input_files), ]
 
     return inquirer.prompt(questions)
 

@@ -135,7 +135,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     ##################################
     solvejob.abaqus_module = ask_abaqus_module()
 
-    solvejob.jobname = ask_jobname()['jobname']
+    solvejob.jobname = ask_jobname(solvejob.inpfile.file.stem)['jobname']
     
     solvejob.nodes = ask_nodes()['nodes']
 
@@ -143,7 +143,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     
     solvejob.cpus = int(solvejob.nodes * solvejob.ntasks_per_node)
 
-    lics_needed = calculate_abaqus_licenses( solvejob.cpus )
+    lics_needed = calculate_abaqus_licenses(solvejob.cpus)
     
     # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
 
@@ -164,13 +164,14 @@ def _workflow_solve_parallel(template,inpfile,output):
     if template:
         solvejob.template = template
     else:
-        solve_par_template=config['abaqus']['solve_parallel_template'].get()
-        solvejob.template="{}/{}".format( templates_dir, str(solve_par_template) )
+        solve_par_template = config['abaqus']['solve_distributed_template'].get()
+        # solvejob.template = "{}/{}".format(templates_dir, str(solve_par_template))
+        solvejob.template = str(pathlib.Path(templates_dir, solve_par_template))
 
-    render_to_out(solvejob,output)
+    render_to_out(solvejob, output)
     
 
-def _workflow_generic(template,output):
+def _workflow_generic(template, output):
     genericjob = GenericJob()
     genericjob.generic_resources = ask_generic_resources()
 
