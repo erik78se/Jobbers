@@ -129,9 +129,6 @@ def _workflow_solve_parallel(template,inpfile,output):
         restartfile = ask_restart()
         solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
         solvejob.inpfile.restart_file = solvejob.restartjobname
-        print('setting solvejob.restartjobname to ' + solvejob.restartjobname)
-    else:
-        print('this is not a restart_read workflow_solve_parallell job')
 
     ##################################
     ## Collect needed resources.

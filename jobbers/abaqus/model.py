@@ -6,7 +6,6 @@ import os
 class SolveJob:
     """ Model for a abaqus Job for solver """
     def __init__(self,inp=None):
-        print("DEBUG: In solvejob constructor, initiating " + str(inp.file))
         self.jobname = None
         #self.inpfili = Inpfile(filename=str(inp.file))  # Inputfile for this job
         # TODO: Reflect - should not reconstruct the inputfile, right?!
@@ -22,7 +21,6 @@ class SolveJob:
         self.cpus = None
         self.ntasks_per_node = None
         self.partitions = []
-        print("DEBUG: Leaving solvejob constructor")
 
 
 class GenericJob:
@@ -47,7 +45,6 @@ class GenericJob:
 class Inpfile:
     """ Model for an .inp files """
     def __init__(self, filename=None):
-        print("DEBUG: creating file %s" % filename)
         self.file = Path(filename)
         self.restart_read = None
         self.restart_write = None
@@ -76,9 +73,7 @@ class Inpfile:
         """
         files_to_stage_up = list()
 
-        # Append input file
-        print("DEBUG: adding self staging: %s" % self.file)
-        # self.file is a PosixPath
+        # Append input file (self.file is a PosixPath)
         files_to_stage_up.append(str(self.file))
 
         # Append include files
@@ -92,11 +87,8 @@ class Inpfile:
 
         # Append restart files
         if self.restart_file:
-            print('appending restart files')
             self.__get_restart_files__()
             files_to_stage_up.extend(self.restart_files)
-        else:
-            print('no restart file to stage up')
 
         return files_to_stage_up
 

@@ -87,17 +87,6 @@ try:
 
     # Stage required files to local scratch
     files_to_stage_up = {{job.inpfile.files_to_stage()}}
-#    [
-#        '{{job.inpfile.file}}'
-#    ]
-    """
-        ####
-        {{job.inpfile.file}}'
-        ####
-        '{{job.inpfile.restart_files}}'
-        ####
-        '{{job.inpfile.files_to_stage()}}'
-    """
     try:
         for stage_up_file in files_to_stage_up:
             for source_file in glob.glob("%s" % stage_up_file):
