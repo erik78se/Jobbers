@@ -1,15 +1,15 @@
 #!/bin/python3
 ## Generic information
 # Job name
-#SBATCH -J {{job.generic_resources.jobname}}
+#SBATCH -J {{job.jobname}}
 # Job time limit in minutes
-#SBATCH -t {{job.generic_resources.timelimit}}
-# User name
-#SBATCH -A {{user_name}}
-# Sed status mail to user at start and end
+#SBATCH -t {{job.timelimit}}
+# TODO: Name of account (not user) for accounting.
+#SBATCH -A abaqus
+# TODO: VERIFY! an email is send at the start and end
 #SBATCH --mail-type=ALL
-# List of partitions available for submission
-#SBATCH --partition {{job.generic_resources.partitions|join(",")}}
+# which partitions to consider
+#SBATCH --partition {{job.partitions|join(",")}}
 ##  Jobpack 1
 # Nodes to use - always one master node
 #SBATCH -N 1
@@ -26,10 +26,11 @@ import sys
 import subprocess
 import glob
 import shutil
+import pwd
 import json
 
-
-PROJECT = "abaqus-analisys"                 # Project is the name of the script
+# Project is the name of the script and template
+PROJECT = "abaqus-solve-eigenfreqency"
 
 # Get job information from SLURM
 JOB_NAME = os.getenv('SLURM_JOB_NAME')
@@ -46,7 +47,7 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = {{job.host_split}}
+HOST_SPLIT = 1
 if 'SLURM_PACK_SIZE' in os.environ:
     sys.exit(f' ERROR: Abaqus Eigenfreqency jobs may not be distributed on several nodes, exiting!')
 else:
@@ -63,9 +64,7 @@ try:
         sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
 
     # Stage required files to local scratch
-    files_to_stage_up = [
-        {{job.inputfiles}}
-    ]
+    files_to_stage_up = {{job.inpfile.files_to_stage()}}
     try:
         for stage_up_file in files_to_stage_up:
             for source_file in glob.glob("%s" % stage_up_file):
@@ -90,8 +89,11 @@ try:
     # Assemble command line
     abaqus_cmd = ['ABQLauncher',
                   f'job={JOB_NAME}',
-                  f'input={os.path.basename("{{job.inpfile}}")}',
+                  f'input={os.path.basename("{{job.inpfile.file}}")}',
                   'interactive',
+{% if job.restartjobname %}
+                  f'oldjob={{job.restartjobname}}',
+{% endif %}
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
 
@@ -106,28 +108,27 @@ try:
     # Launch application
     # TODO: Encapsulate process in processManager
     print(*abaqus_cmd, sep=" ")
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=os.module_env, stdout=subprocess.PIPE)
-    (module_out, module_err) = abaqus_process.communicate()
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=module_env, stdout=subprocess.PIPE)
+    (abaqus_out, abaqus_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
     if abaqus_exit_status == 0:
-        print("Abaqus was ran successfully")
+        print("Abaqus was run successfully")
         exit_status = "Done"
     else:
-        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}')
+        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {abaqus_out}\nstderr: {abaqus_err}')
         exit_status = "Exited"
 
     # Stage back result files files to local scratch
     files_to_stage_back = [
-        {{job.outputfiles}}
     ]
-    files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder, JOB_NAME + ".*")}')
+    files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
     try:
         print(f'Staging back:')
         for stage_back_file in files_to_stage_back:
             print(f'\t - {stage_back_file}')
             target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
-            shutil.copy(source_file, target_file)
+            shutil.copy(stage_back_file, target_file)
             # TODO: Check what this line actually does
             # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
     except (IOError, os.error) as why:

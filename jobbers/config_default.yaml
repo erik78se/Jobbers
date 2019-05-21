@@ -8,6 +8,7 @@ abaqus:
   # default template
   solve_template: 'abaqus-solve-template.j2'
   solve_distributed_template: 'abaqus-solve-distributed-template.j2'
+  solve_eigenfrequency_template: 'abaqus-solve-eigenfreqency-template.j2'
   # Populated modules list
   envmodules:
     - 'abaqus/2018-2'
