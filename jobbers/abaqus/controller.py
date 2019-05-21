@@ -1,6 +1,7 @@
 import os
 import click
 import jobbers
+import confuse
 from jobbers.abaqus.inpfileparse import traverse
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import ( SolveJob, GenericJob, Inpfile)
@@ -139,6 +140,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     
     solvejob.nodes = ask_nodes()['nodes']
 
+    # TODO: This should not be hardcoded here. Cluster config?
     solvejob.ntasks_per_node = 36  # We guess that cores =36 based on cluster sizes
     
     solvejob.cpus = int(solvejob.nodes * solvejob.ntasks_per_node)
@@ -149,9 +151,20 @@ def _workflow_solve_parallel(template,inpfile,output):
 
     solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
 
-    solvejob.scratch = ask_scratch()['scratch']
-    
-    solvejob.partitions = ask_partitions()['partitions']
+    # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
+    # solvejob.scratch = ask_scratch()['scratch']
+    #try:
+    #if config['slurm']['shared_scratch'].get():
+    solvejob.scratch = config['slurm']['shared_scratch'].get()
+    #except NotFoundError:
+    #    solvejob.scratch = ask_scratch()['scratch']
+   
+    # 20190521: Do not ask for partitions at the moment, go with config defaults /jhacxc
+    # solvejob.partitions = ask_partitions()['partitions']
+#    if config['slurm']['default_partition'].get():
+    solvejob.partitions.append(config['slurm']['default_partition'].get())
+#    else:
+#        solvejob.partitions = ask_partitions()['partitions']
 
     solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
 
