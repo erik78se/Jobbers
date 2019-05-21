@@ -169,7 +169,7 @@ def _workflow_solve_parallel(template,inpfile,output):
     else:
         solve_par_template = config['abaqus']['solve_distributed_template'].get()
         # solvejob.template = "{}/{}".format(templates_dir, str(solve_par_template))
-        solvejob.template = pathlib.Path(templates_dir, solve_par_template)
+        solvejob.template = str(pathlib.Path(templates_dir, solve_par_template))
 
     render_to_out(solvejob, output)
     
