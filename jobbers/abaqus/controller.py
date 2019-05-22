@@ -9,7 +9,6 @@ from jobbers.abaqus.view import *
 from jobbers import config
 from jobbers.templating import render_to_out
 
-
 @click.command()
 @click.argument('output', type=click.File('w'))
 @click.option('-t', '--template',
@@ -66,16 +65,21 @@ def cli(output, template, inp):
                 no_such_files.append(i)
         
         # If eigenfrequency == False then We can run with MPI.
-        if not input_deck[0].eigenfrequency:   
+        # This check does not seem to work as expected:
+        # if not input_deck[0].eigenfrequency:
+        if not input_file.eigenfrequency:
+            print("DEBUG: NOT eigenfrequency, can run parallell")
             _workflow_solve_parallel(template, input_file, output)
-            
+
         else:
-            _workflow_solve(template, input_file, output)
-            
+            print("DEBUG: eigenfrequency, can NOT run parallell")
+            _workflow_solve_eigen(template, input_file, output)
+
     elif wf == 'debug':
         _workflow_debug()
         
     elif wf == 'generic':
+        
         _workflow_generic(template, output)
         
     else:
@@ -98,9 +102,9 @@ def _workflow_solve(template, inpfile, output):
     solvejob.abaqus_licenses = ask_abaqus_licenses()
 
     solvejob.partitions = ask_partitions()['partitions']
-    
+
     # Info gathered, dispatch to job rendering
-    templates_dir = os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
+    templates_dir=os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
     
     if template:
         solvejob.template = template
@@ -111,7 +115,66 @@ def _workflow_solve(template, inpfile, output):
     render_to_out(solvejob, output)
 
 
-def _workflow_solve_parallel(template, inpfile, output):
+def _workflow_solve_eigen(template, inpfile, output):
+    """
+    The solve-eigen sub workflow.
+    """
+    solvejob = SolveJob(inpfile)
+
+    # If job is a restart read job, ask for restart files.
+    ##### IS THIS RELEVANT FOR EIGENFREQUENCY?? ####
+    if inpfile.restart_read:
+        restartfile = ask_restart()
+        solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
+        solvejob.inpfile.restart_file = solvejob.restartjobname
+
+    ##################################
+    ## Collect needed resources.
+    ##################################
+    solvejob.abaqus_module = ask_abaqus_module()
+
+    solvejob.jobname = ask_jobname(solvejob.inpfile.file.stem)['jobname']
+
+    solvejob.nodes = 1
+
+    # TODO: This should not be hardcoded here. Cluster config?
+    solvejob.ntasks_per_node = 36  # We guess that cores =36 based on cluster sizes
+
+    solvejob.cpus = int(solvejob.nodes * solvejob.ntasks_per_node)
+
+    lics_needed = calculate_abaqus_licenses(solvejob.cpus)
+
+    # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
+
+    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
+
+    # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
+    # solvejob.scratch = ask_scratch()['scratch']
+    solvejob.scratch = config['slurm']['shared_scratch'].get()
+
+    # 20190521: Do not ask for partitions at the moment, go with config defaults /jhacxc
+    # solvejob.partitions = ask_partitions()['partitions']
+    solvejob.partitions.append(config['slurm']['default_partition'].get())
+
+    solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
+
+    ##########################################
+    # Info gathered, dispatch to job rendering
+    ##########################################
+
+    templates_dir = os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')
+
+    if template:
+        solvejob.template = template
+    else:
+        solve_par_template = config['abaqus']['solve_eigenfrequency_template'].get()
+        # solvejob.template = "{}/{}".format(templates_dir, str(solve_par_template))
+        solvejob.template = str(pathlib.Path(templates_dir, solve_par_template))
+
+    render_to_out(solvejob, output)
+
+
+def _workflow_solve_parallel(template,inpfile,output):
     """
     The solve-parallel sub workflow.
     """
@@ -140,8 +203,18 @@ def _workflow_solve_parallel(template, inpfile, output):
     lics_needed = calculate_abaqus_licenses(solvejob.cpus)
     solvejob.abaqus_licenses = {'license': 'abaqus@flex_host', 'volume': lics_needed}
 
+    # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
+
+    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
+
+    # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
+    # solvejob.scratch = ask_scratch()['scratch']
     solvejob.scratch = config['slurm']['shared_scratch'].get()
+
+    # 20190521: Do not ask for partitions at the moment, go with config defaults /jhacxc
+    # solvejob.partitions = ask_partitions()['partitions']
     solvejob.partitions.append(config['slurm']['default_partition'].get())
+
     solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
 
     # Info gathered, dispatch to job rendering

@@ -24,7 +24,7 @@ jobbers.abaqus-jobber <some-output-file>
 ```bash
 sudo apt install python3-venv
 python3 -m venv venv
-source venv/bin/activate
+source ./venv/bin/activate
 pip install --upgrade pip wheel
 pip install -r requirements.txt
 ```

@@ -40,9 +40,10 @@ import glob
 import shutil
 import pwd
 import json
+from pathlib import Path
 
-
-PROJECT = "abaqus-analisys"                 # Project is the name of the script
+# Project is the name of the script and template
+PROJECT = "abaqus-solve-distributed"
 
 # Get job information from SLURM
 JOB_NAME = os.getenv('SLURM_JOB_NAME')
@@ -84,6 +85,10 @@ try:
         os.makedirs(local_scratch_folder)
     except OSError:
         sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
+
+    linksrc = f'/net/{HOSTNAME}{local_scratch_folder}'
+    scratchlink = Path(f'{JOB_NAME}_{JOB_ID}')
+    scratchlink.symlink_to(linksrc)
 
     # Stage required files to local scratch
     files_to_stage_up = {{job.inpfile.files_to_stage()}}
@@ -131,14 +136,14 @@ try:
     # TODO: Encapsulate process in processManager
     print(*abaqus_cmd, sep=" ")
     abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=module_env, stdout=subprocess.PIPE)
-    (module_out, module_err) = abaqus_process.communicate()
+    (abaqus_out, abaqus_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
     if abaqus_exit_status == 0:
         print("Abaqus was run successfully")
         exit_status = "Done"
     else:
-        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {module_out}\nstderr: {module_err}')
+        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {abaqus_out}\nstderr: {abaqus_err}')
         exit_status = "Exited"
 
     # Stage back result files files to local scratch
@@ -152,7 +157,7 @@ try:
             target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
             shutil.copy(stage_back_file, target_file)
             # TODO: Check what this line actually does
-            # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410
+            # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Stage back failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
 
@@ -162,5 +167,8 @@ finally:
     try:
         if os.path.exists(local_scratch_folder):
             shutil.rmtree(local_scratch_folder)
+        # Remove the scratchlink
+        if os.path.islink(scratchlink):
+            scratchlink.unlink()
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
