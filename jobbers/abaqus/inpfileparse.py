@@ -36,7 +36,7 @@ def children(infile):
             for line in fh:
                 line = line.decode(errors='replace').strip()
 
-                if '*' in line and not '**' in line:      # Run a cheep operations to limit re calls
+                if '*' in line and not line.startswith('**'):      # Run a cheep operations to limit re calls
                     otherfile = file_regexp.search(line)
                     include = input_regexp.search(line)
                     restartr = restart_read_regexp.search(line)
