@@ -36,34 +36,35 @@ def children(infile):
             for line in fh:
                 line = line.decode(errors='replace').strip()
 
-                otherfile = file_regexp.search(line)
-                include = input_regexp.search(line)
-                restartr = restart_read_regexp.search(line)
-                restartw = restart_write_regexp.search(line)
-                eigen = eigen_regexp.search(line)
-                random = random_regexp.search(line)
+                if '*' in line and not '**' in line:      # Run a cheep operations to limit re calls
+                    otherfile = file_regexp.search(line)
+                    include = input_regexp.search(line)
+                    restartr = restart_read_regexp.search(line)
+                    restartw = restart_write_regexp.search(line)
+                    eigen = eigen_regexp.search(line)
+                    random = random_regexp.search(line)
 
-                if include:
-                    c = include.group(1).strip()
-                    child = Inpfile(filename=c)
-                    infile.input_files.append(child)
-                    r.append(child)
+                    if include:
+                        c = include.group(1).strip()
+                        child = Inpfile(filename=c)
+                        infile.input_files.append(child)
+                        r.append(child)
 
-                if otherfile:
-                    o = include.group(1).strip()
-                    infile.input_files.append(o)
+                    if otherfile:
+                        o = include.group(1).strip()
+                        infile.input_files.append(o)
 
-                if restartr:
-                    infile.restart_read = True
+                    if restartr:
+                        infile.restart_read = True
 
-                if restartw:
-                    infile.restart_write = True
+                    if restartw:
+                        infile.restart_write = True
 
-                if eigen:
-                    infile.eigenfrequency = True
+                    if eigen:
+                        infile.eigenfrequency = True
 
-                if random:
-                    infile.random_response = True
+                    if random:
+                        infile.random_response = True
                 
         return r
 
