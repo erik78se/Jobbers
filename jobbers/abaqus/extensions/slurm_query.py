@@ -16,6 +16,8 @@ def query_jobs_by_user(user_name):
     # Convert byte string to string
     current_jobs = std_out.decode(errors='replace').split("\n")
 
+    print(f'"{current_jobs}"")
+
     job_array = list()
     if current_jobs:
         for job in current_jobs:
