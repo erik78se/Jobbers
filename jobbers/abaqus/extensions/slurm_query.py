@@ -16,10 +16,10 @@ def query_jobs_by_user(user_name):
     # Convert byte string to string
     current_jobs = std_out.decode(errors='replace').split("\n")
 
-    print(f'"{current_jobs}"")
+    print(f'"{current_jobs}"')
 
     job_array = list()
-    if current_jobs:
+    if current_jobs != '':
         for job in current_jobs:
             job_id, state, job_name = job.split(';')
             job_array.append([job_id, state, job_name])
