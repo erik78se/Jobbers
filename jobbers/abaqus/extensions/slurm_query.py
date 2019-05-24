@@ -14,14 +14,25 @@ def query_jobs_by_user(user_name):
         return False
 
     # Convert byte string to string
-    current_jobs = std_out.decode(errors='replace').split("\n")
-
-    print(f'"{current_jobs}"')
+    current_jobs = std_out.decode(errors='replace').strip().split("\n")
+    #current_jobs = std_out.decode(errors='replace')
 
     job_array = list()
-    if current_jobs != '':
+    if current_jobs != ['']:
         for job in current_jobs:
             job_id, state, job_name = job.split(';')
             job_array.append([job_id, state, job_name])
 
-    return job_array
+        return job_array
+    else
+        return False
+
+
+if __name__ == '__main__':
+    from getpass import getuser
+
+    print(f' Current user name "{getuser()}" ')
+    jobs = query_jobs_by_user(getuser())
+    for job in jobs:
+        id, state, name = job
+        print(f' {id} - {state} - {name}')
