@@ -27,7 +27,7 @@ def query_jobs_by_user(user_name):
 
 def query_jobs_by_user_json(user_name):
     # Query SLURM for current jobs by user
-    command = ['squeue', '-o', '%all"', '-u', user_name]
+    command = ['squeue', '-o', '%all', '-u', user_name]
     process = subprocess.Popen(command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
@@ -40,21 +40,23 @@ def query_jobs_by_user_json(user_name):
         return []
 
     # Convert byte string to string
-    current_jobs = std_out.decode(errors='replace').strip().split("\n")
+    #current_jobs = std_out.decode(errors='replace').strip().split("\n")
+    current_jobs = std_out.strip().split("\n")
 
-    headers = current_jobs[0:1]
+    headers = current_jobs[0]
     current_jobs.pop(0)
 
-    job_array = []
+    job_array = dict()
     if current_jobs != ['']:
         for job in current_jobs:
             current_job = dict()
             for header, value in zip(headers.split('|'), job.split('|')):
                 current_job[header] = value
-            job_array.append(current_job)
-        return job_array
+            jobid = current_job['JOBID']
+            job_array[jobid]=current_job
+        return json.dumps(job_array, indent=2)
     else:
-        return []
+        return ''
 
 
 if __name__ == '__main__':
@@ -70,4 +72,4 @@ if __name__ == '__main__':
         print(f' {id_job} - {state} - {name}')
 
     entries = query_jobs_by_user_json(getuser())
-    print(json.dumps(entries, indent=2))
+    print(entries)
