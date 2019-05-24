@@ -10,7 +10,7 @@ def query_jobs_by_user(user_name):
         (std_out, std_err) = process.communicate(timeout=6)
     except subprocess.TimeoutExpired:
         print(" WARNING: SLURM is not responding...")
-        return False
+        return []
 
     # Convert byte string to string
     current_jobs = std_out.decode(errors='replace').strip().split("\n")
@@ -22,7 +22,7 @@ def query_jobs_by_user(user_name):
             job_array.append([job_id, job_state, job_name])
         return job_array
     else:
-        return False
+        return []
 
 
 if __name__ == '__main__':
