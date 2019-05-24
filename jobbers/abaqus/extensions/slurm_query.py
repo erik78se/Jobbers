@@ -1,5 +1,5 @@
 import subprocess
-
+import json
 
 def query_jobs_by_user(user_name):
 
@@ -25,6 +25,38 @@ def query_jobs_by_user(user_name):
         return []
 
 
+def query_jobs_by_user_json(user_name):
+    # Query SLURM for current jobs by user
+    command = ['squeue', '-o', '%all"', '-u', user_name]
+    process = subprocess.Popen(command,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               shell=False,
+                               universal_newlines=True)
+    try:
+        (std_out, std_err) = process.communicate(timeout=6)
+    except subprocess.TimeoutExpired:
+        print(" WARNING: SLURM is not responding...")
+        return []
+
+    # Convert byte string to string
+    current_jobs = std_out.decode(errors='replace').strip().split("\n")
+
+    headers = current_jobs[0:1]
+    current_jobs.pop(0)
+
+    job_array = []
+    if current_jobs != ['']:
+        for job in current_jobs:
+            current_job = dict()
+            for header, value in zip(headers.split('|'), job.split('|')):
+                current_job[header] = value
+            job_array.append(current_job)
+        return job_array
+    else:
+        return []
+
+
 if __name__ == '__main__':
     """
     Test code for simple debugging of modules
@@ -36,3 +68,6 @@ if __name__ == '__main__':
     for a_job in jobs:
         id_job, state, name = a_job
         print(f' {id_job} - {state} - {name}')
+
+    entries = query_jobs_by_user_json(getuser())
+    print(json.dumps(entries, indent=2))
