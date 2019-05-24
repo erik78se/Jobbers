@@ -1,13 +1,17 @@
 import os
+import sys
 import click
 import jobbers
 import confuse
+from getpass import getuser
 from jobbers.abaqus.inpfileparse import traverse
 from jobbers.abaqus.licenser import calculate_abaqus_licenses
 from jobbers.abaqus.model import (SolveJob, GenericJob, Inpfile)
 from jobbers.abaqus.view import *
 from jobbers import config
 from jobbers.templating import render_to_out
+
+from jobbers.abaqus.extensions.slurm_query import query_jobs_by_user
 
 @click.command()
 @click.argument('output', type=click.File('w'))
@@ -182,9 +186,24 @@ def _workflow_solve_parallel(template,inpfile,output):
 
     # If job is a restart read job, ask for restart files.
     if inpfile.restart_read:
-        restartfile = ask_restart()
-        solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
-        solvejob.inpfile.restart_file = solvejob.restartjobname
+        restart_type = ask_restart()
+
+        if restart_type is 'file':
+            restartfile = ask_restart_from_file()
+            solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
+            solvejob.inpfile.restart_file = solvejob.restartjobname
+        elif restart_type is 'slurm':
+            jobs_by_user = query_jobs_by_user(getuser())
+
+            if not jobs_by_user:
+                print(f' ERROR: No running jobs were found for user {getuser()}, exiting!')
+                sys.exit(0)
+
+            job_id = ask_restart_scheduled_job(jobs_by_user)
+            solvejob.restartjobname = pathlib.Path(jobs_by_user[job_id]['WORK_DIR'],
+                                                   jobs_by_user[job_id]['JOB_NAME'],
+                                                   '.res')
+            solvejob.inpfile.restart_file = solvejob.restartjobname
 
     # Collect needed resources.
     solvejob.abaqus_module = ask_abaqus_module()
@@ -202,10 +221,6 @@ def _workflow_solve_parallel(template,inpfile,output):
 
     lics_needed = calculate_abaqus_licenses(solvejob.cpus)
     solvejob.abaqus_licenses = {'license': 'abaqus@flex_host', 'volume': lics_needed}
-
-    # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
-
-    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
 
     # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
     # solvejob.scratch = ask_scratch()['scratch']

@@ -159,18 +159,45 @@ def ask_inp():
 def ask_restart():
     """ Returns a dict with the answers """
 
-    l = _list_restartfiles()
-    questions = None
-    if not l:
-        questions = [ inquirer.Path('restartfile',
-                        message="Restart file (absolute path)",
-                        path_type=inquirer.Path.FILE,
-                        exists=True), ]
+    questions = [inquirer.List('workflow',
+                              message="This is a restart analysis, select restart type?",
+                              choices=[
+                                  ('Based on a finished job, *.res', 'file'),
+                                  ('Currently submitted job', 'slurm'),
+                              ],
+                              default='file'),
+                 ]
+    return inquirer.prompt(questions)['workflow']
+
+
+def ask_restart_scheduled_job(scheduled_jobs):
+    """ Ask which submitted job that is to be restarted """
+    avialable_jobs = list()
+    for job_id, status, job_name, work_dir in scheduled_jobs:
+        avialable_jobs.extend([f'{job_id} - {job_name}', job_id])
+
+    questions = [inquirer.List('restart_job_id',
+                               message=" Select which job to restart after completion:",
+                               choices=avialable_jobs),
+                 ]
+    return inquirer.prompt(questions)
+
+
+def ask_restart_from_file():
+    """ Ask which previously completed job file that is to be restarted """
+    possible_restart_files = _list_restartfiles()
+
+    if not possible_restart_files:
+        questions = [inquirer.Path('restartfile',
+                                   message="Restart file (absolute path)",
+                                   path_type=inquirer.Path.FILE,
+                                   exists=True),
+                     ]
     else:
-        questions = [ inquirer.List('restartfile',
-                      message=".res file to use (absolute path)",
-                      choices=_list_restartfiles()),
-    ]
+        questions = [inquirer.List('restartfile',
+                                   message=".res file to use (absolute path)",
+                                   choices=possible_restart_files),
+                     ]
 
     return inquirer.prompt(questions)
 
