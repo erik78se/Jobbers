@@ -1,6 +1,7 @@
 import subprocess
 import json
 
+
 def query_jobs_by_user(user_name):
 
     # Query SLURM for current jobs by user
@@ -40,7 +41,6 @@ def query_jobs_by_user_json(user_name):
         return []
 
     # Convert byte string to string
-    #current_jobs = std_out.decode(errors='replace').strip().split("\n")
     current_jobs = std_out.strip().split("\n")
 
     headers = current_jobs[0]
@@ -50,10 +50,13 @@ def query_jobs_by_user_json(user_name):
     if current_jobs != ['']:
         for job in current_jobs:
             current_job = dict()
-            for header, value in zip(headers.split('|'), job.split('|')):
-                current_job[header] = value
-            jobid = current_job['JOBID']
-            job_array[jobid]=current_job
+            try:
+                for header, value in zip(headers.split('|'), job.split('|')):
+                    current_job[header] = value
+                jobid = current_job['JOBID']
+                job_array[jobid] = current_job
+            except:
+                print("WARNING: All data from SLURM could not be interpreted")
         return json.dumps(job_array, indent=2)
     else:
         return ''
@@ -66,10 +69,13 @@ if __name__ == '__main__':
     from getpass import getuser
 
     print(f' Current user name "{getuser()}" ')
+
+    print("\n Query by username")
     jobs = query_jobs_by_user(getuser())
     for a_job in jobs:
         id_job, state, name = a_job
         print(f' {id_job} - {state} - {name}')
 
+    print("\n Query all attributes by username to json")
     entries = query_jobs_by_user_json(getuser())
     print(entries)
