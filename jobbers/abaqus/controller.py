@@ -178,7 +178,7 @@ def _workflow_solve_eigen(template, inpfile, output):
     render_to_out(solvejob, output)
 
 
-def _workflow_solve_parallel(template,inpfile,output):
+def _workflow_solve_parallel(template, inpfile, output):
     """
     The solve-parallel sub workflow.
     """

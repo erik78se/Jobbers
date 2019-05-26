@@ -160,25 +160,25 @@ def ask_restart():
     """ Returns a dict with the answers """
 
     questions = [inquirer.List('workflow',
-                              message="This is a restart analysis, select restart type?",
-                              choices=[
+                               message="This is a restart analysis, select restart type?",
+                               choices=[
                                   ('Based on a finished job, *.res', 'file'),
                                   ('Currently submitted job', 'slurm'),
-                              ],
-                              default='file'),
+                               ],
+                               default='file'),
                  ]
     return inquirer.prompt(questions)['workflow']
 
 
 def ask_restart_scheduled_job(scheduled_jobs):
     """ Ask which submitted job that is to be restarted """
-    avialable_jobs = list()
-    for job_id, status, job_name, work_dir in scheduled_jobs:
-        avialable_jobs.extend([f'{job_id} - {job_name}', job_id])
+    available_jobs = list()
+    for job_id, item in scheduled_jobs.items():
+        available_jobs.extend([f'{job_id} - {item["JOB_NAME"]}', job_id])
 
     questions = [inquirer.List('restart_job_id',
                                message=" Select which job to restart after completion:",
-                               choices=avialable_jobs),
+                               choices=available_jobs),
                  ]
     return inquirer.prompt(questions)
 
