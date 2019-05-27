@@ -40,6 +40,8 @@ class GenericJob:
         self.ntasks_per_node = None
         self.partitions = []
         self.restartjobname = None
+        self.dependency_type = None
+        self.dependent_job_id = None
 
 
 class Inpfile:

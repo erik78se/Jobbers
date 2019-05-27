@@ -10,6 +10,10 @@
 #SBATCH --mail-type=ALL
 # which partitions to consider
 #SBATCH --partition {{job.partitions|join(",")}}
+{% if job.dependency_type %}
+# Add dependency
+#SBATCH {{dependency_type}}:{{dependent_job_id}}
+{% endif %}
 ##  Jobpack 1
 # Nodes to use - always one master node
 #SBATCH -N 1

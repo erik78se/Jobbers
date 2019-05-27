@@ -192,6 +192,7 @@ def _workflow_solve_parallel(template, inpfile, output):
             restartfile = ask_restart_from_file()
             solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
             solvejob.inpfile.restart_file = solvejob.restartjobname
+
         elif restart_type is 'slurm':
             jobs_by_user = query_jobs_by_user(getuser())
 
@@ -204,6 +205,9 @@ def _workflow_solve_parallel(template, inpfile, output):
                                                    jobs_by_user[job_id]['JOB_NAME'],
                                                    '.res')
             solvejob.inpfile.restart_file = solvejob.restartjobname
+            # Add dependency to start after previously job has completed successfully
+            solvejob.dependency_type = 'afterok'
+            solvejob.dependent_job_id = job_id
 
     # Collect needed resources.
     solvejob.abaqus_module = ask_abaqus_module()
