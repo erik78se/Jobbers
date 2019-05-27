@@ -2,6 +2,7 @@ import os
 import pathlib
 from jobbers import config
 import inquirer  # https://pypi.org/project/inquirer/
+import confuse
 
 
 def _list_inputfiles(path=None):
@@ -56,6 +57,21 @@ def ask_memory():
         ]
 
     return inquirer.prompt(questions)
+
+
+def ask_masternode_mem():
+    """ Master node memory """
+    m = config['abaqus']['masternode_mem'].get()
+    try:
+        defmem = config['abaqus']['masternode_mem_default'].get()[0]
+    except confuse.NotFoundError:
+        defmem = m[0]
+    q = [inquirer.List('memory',
+                       message="Select required memory for master node (GiB)",
+                       choices=m,
+                       default=defmem), ]
+
+    return inquirer.prompt(q)
 
 
 def ask_scratch():

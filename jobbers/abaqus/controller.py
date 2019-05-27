@@ -68,11 +68,9 @@ def cli(output, template, inp):
         # This check does not seem to work as expected:
         # if not input_deck[0].eigenfrequency:
         if not input_file.eigenfrequency:
-            print("DEBUG: NOT eigenfrequency, can run parallell")
             _workflow_solve_parallel(template, input_file, output)
 
         else:
-            print("DEBUG: eigenfrequency, can NOT run parallell")
             _workflow_solve_eigen(template, input_file, output)
 
     elif wf == 'debug':
@@ -122,7 +120,6 @@ def _workflow_solve_eigen(template, inpfile, output):
     solvejob = SolveJob(inpfile)
 
     # If job is a restart read job, ask for restart files.
-    ##### IS THIS RELEVANT FOR EIGENFREQUENCY?? ####
     if inpfile.restart_read:
         restartfile = ask_restart()
         solvejob.restartjobname = os.path.splitext(os.path.basename(str(restartfile)))[0]
@@ -157,6 +154,10 @@ def _workflow_solve_eigen(template, inpfile, output):
     solvejob.partitions.append(config['slurm']['default_partition'].get())
 
     solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
+
+    # Ask for masternode mem (GiB), convert to MiB which is Slurm default
+    # Note: Multiply by 950 (not 1024) to make sure limit is below memory output of 'slurm -C'
+    solvejob.masternode_mem = int(float(ask_masternode_mem()['memory'])*float(1024)*0.95)
 
     ##########################################
     # Info gathered, dispatch to job rendering
@@ -216,6 +217,15 @@ def _workflow_solve_parallel(template,inpfile,output):
     solvejob.partitions.append(config['slurm']['default_partition'].get())
 
     solvejob.timelimit = int(ask_timelimit()['timelimit'])*60
+
+    # Ask for masternode mem (GiB), convert to MiB which is Slurm default
+    # Note: Multiply by 950 (not 1024) to make sure limit is below memory output of 'slurm -C'
+    solvejob.masternode_mem = int(float(ask_masternode_mem()['memory'])*float(1024)*0.95)
+    # For distributed jobs, explicitly set worker node limit if defined
+    try:
+        solvejob.workernode_mem = int(float(config['abaqus']['workernode_mem_default'].get()[0])*float(1024)*0.95)
+    except confuse.NotFoundError:
+        pass
 
     # Info gathered, dispatch to job rendering
     templates_dir = os.path.join(os.path.dirname(jobbers.abaqus.__file__), 'templates')

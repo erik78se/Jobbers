@@ -13,8 +13,10 @@
 ##  Jobpack 1
 # Nodes to use - always one master node
 #SBATCH -N 1
-# Memory requirement on master node(cluster config?)
-#SBATCH --mem=700G
+{% if job.masternode_mem %}
+# Memory requirement on master node
+#SBATCH --mem={{job.masternode_mem}}
+{% endif %}
 # Licenses required, appointed to master job
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
 # Exclusive execution on head node
@@ -25,8 +27,10 @@
 #SBATCH packjob
 # Remaining nodes are worker nodes
 #SBATCH -N {{ job.nodes - 1 }}
-# Memory requirement on worker nodes(clusterconfig?)
-#SBATCH --mem=300G
+{% if job.workernode_mem %}
+# Memory requirement on worker node(s)
+#SBATCH --mem={{job.workernode_mem}}
+{% endif %}
 # Exclusive execution on worker node
 #SBATCH --exclusive
 {% endif %}
