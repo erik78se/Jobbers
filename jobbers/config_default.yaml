@@ -17,3 +17,6 @@ femfat:
   template: 'femfat_slurm.j2'
   envmodules:
     - 'femfat/1'
+
+tensorflow:
+  template: 'tensor-demo.j2'

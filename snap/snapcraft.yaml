@@ -22,3 +22,6 @@ apps:
     femfat-jobber:
       command: femfat-jobber
       plugs: [home]
+    tensor-jobber:
+      command: tensor-jobber
+      plugs: [home]

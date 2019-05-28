@@ -1,0 +1,37 @@
+#!/bin/bash -e
+#SBATCH -J {{ job.jobname }}
+#SBATCH -t {{ job.timelimit }}                # timelimit in minutes
+#SBATCH --mail-type=END      # an email is send at the end of the job
+#SBATCH -N 1                 # Use 1 node for femfat jobs
+#SBATCH --partition {{job.partitions|join(",")}}   # which partitions to consider
+#SBATCH --output      MyTensorJob.%j.out # Include the job ID in the names of
+#SBATCH --error       MyTensorJob.%j.err # the output and error files
+
+workdir=$SLURM_SUBMIT_DIR
+scratch={{ job.scratch }}
+mkdir -p  $scratch
+
+cd $scratch
+
+python3 -m venv venv
+
+source venv/bin/activate
+
+pip install --upgrade pip
+pip install --upgrade tensorflow requests wheel
+
+if [ ! 1 ]; then
+ pip install tensorflow-gpu
+fi
+
+# Test 
+python -c "import tensorflow as tf; tf.enable_eager_execution(); print(tf.reduce_sum(tf.random_normal([1000, 1000])))"
+
+
+mkdir -p tensorflow_projects
+cd tensorflow_projects
+git clone https://github.com/tensorflow/models.git
+
+python models/tutorials/image/mnist/convolutional.py
+
+rm -rf venv

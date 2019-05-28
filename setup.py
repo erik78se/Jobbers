@@ -12,6 +12,7 @@ setuptools.setup(
         'console_scripts': [
             'abaqus-jobber=jobbers.abaqus.controller:cli',
             'femfat-jobber=jobbers.femfat.controller:cli',
+            'tensor-jobber=jobbers.tensorflow.controller:cli',
         ],
     },
     include_package_data = True
