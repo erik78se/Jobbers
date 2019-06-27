@@ -19,8 +19,8 @@ abaqus:
     - '1536'
   masternode_mem_default:
     - '768'
-#  workernode_mem_default:
-#    - '384'
+  workernode_mem_default:
+    - '384'
 
 femfat:
   template: 'femfat_slurm.j2'

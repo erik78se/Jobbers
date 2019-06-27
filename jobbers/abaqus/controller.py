@@ -134,6 +134,8 @@ def _workflow_solve_eigen(template, inpfile, output):
 
     solvejob.nodes = 1
 
+    solvejob.gpus = ask_gpus_bool()['gpus']
+
     # TODO: This should not be hardcoded here. Cluster config?
     solvejob.ntasks_per_node = 36  # We guess that cores =36 based on cluster sizes
 
@@ -143,7 +145,7 @@ def _workflow_solve_eigen(template, inpfile, output):
 
     # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
 
-    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
+    solvejob.abaqus_licenses = { 'license': 'abaqus@slurmdbd', 'volume': lics_needed }
 
     # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
     # solvejob.scratch = ask_scratch()['scratch']
@@ -157,7 +159,11 @@ def _workflow_solve_eigen(template, inpfile, output):
 
     # Ask for masternode mem (GiB), convert to MiB which is Slurm default
     # Note: Multiply by 950 (not 1024) to make sure limit is below memory output of 'slurm -C'
-    solvejob.masternode_mem = int(float(ask_masternode_mem()['memory'])*float(1024)*0.95)
+    # TEMPHACK: If GPU is selected, do not ask for mem, set over 1TB to get a GPU node
+    if solvejob.gpus:
+        solvejob.masternode_mem = 1048576
+    else:
+        solvejob.masternode_mem = int(float(ask_masternode_mem()['memory'])*float(1024)*0.95)
 
     ##########################################
     # Info gathered, dispatch to job rendering
@@ -202,11 +208,11 @@ def _workflow_solve_parallel(template,inpfile,output):
     solvejob.cpus = int(solvejob.nodes * solvejob.ntasks_per_node)
 
     lics_needed = calculate_abaqus_licenses(solvejob.cpus)
-    solvejob.abaqus_licenses = {'license': 'abaqus@flex_host', 'volume': lics_needed}
+    solvejob.abaqus_licenses = {'license': 'abaqus@slurmdbd', 'volume': lics_needed}
 
     # solvejob.abaqus_licenses = ask_abaqus_licenses_parallel()
 
-    solvejob.abaqus_licenses = { 'license': 'abaqus@flex_host', 'volume': lics_needed }
+    solvejob.abaqus_licenses = { 'license': 'abaqus@slurmdbd', 'volume': lics_needed }
 
     # 20190521: Do not ask for scratch at the moment, go with config default /jhacxc
     # solvejob.scratch = ask_scratch()['scratch']

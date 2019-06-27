@@ -123,6 +123,18 @@ def ask_cpus_int():
     return inquirer.prompt(questions)
 
 
+def ask_gpus_bool():
+    """ Returns a bool answering whether to use gpu or not """
+
+    questions = [
+        inquirer.Confirm('gpus',
+                      message="Should GPUs be used?",
+                      default=False),
+    ]
+
+    return inquirer.prompt(questions)
+
+
 def ask_nodes():
     """ Returns a dict with the answers for questions about nodes """
     

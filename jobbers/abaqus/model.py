@@ -19,6 +19,7 @@ class SolveJob:
         self.abaqus_module = {}
         self.nodes = None
         self.cpus = None
+        self.gpus = None
         self.ntasks_per_node = None
         self.partitions = []
 
