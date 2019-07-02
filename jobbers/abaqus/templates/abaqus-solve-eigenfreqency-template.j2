@@ -50,11 +50,7 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-{% if job.gpus %}
 HOST_SPLIT = 1
-{% else %}
-HOST_SPLIT = 1
-{% endif %}
 
 if 'SLURM_PACK_SIZE' in os.environ:
     sys.exit(f' ERROR: Abaqus Eigenfreqency jobs may not be distributed on several nodes, exiting!')

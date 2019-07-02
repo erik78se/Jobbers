@@ -80,7 +80,8 @@ class Inpfile:
         # Append include files
         for file in self.input_files:
             # TODO: the input_files are also Inpfiles. should really abspath be done here?
-            files_to_stage_up.append(os.path.abspath(str(file.file)))
+            #files_to_stage_up.append(os.path.abspath(str(file.file)))
+            files_to_stage_up.extend(file.files_to_stage())
 
         # Append other files
         for file in self.other_files:
