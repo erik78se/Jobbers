@@ -151,9 +151,14 @@ try:
         exit_status = "Exited"
 
     # Stage back result files files to local scratch
-    files_to_stage_back = [
-    ]
-    files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
+    files_to_stage_back = []
+{%- if job.inpfile.restart_write %}
+    for f in filter(re.compile(r'^%s.[a-z]{3}$' % JOB_NAME).match, \
+{%- else %}
+    for f in filter(re.compile(r'^%s.(pre|dat|msg|sta|use|odb|sim|fil|prt|err)$' % JOB_NAME).match, \
+{%- endif %}
+    os.listdir(local_scratch_folder)):
+        files_to_stage_back.append(f'{local_scratch_folder}/{f}')
     try:
         print(f'Staging back:')
         for stage_back_file in files_to_stage_back:

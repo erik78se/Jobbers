@@ -55,7 +55,12 @@ def cli(output, template, inp):
             inp = ask_inp()['inpfile']
 
         input_file = Inpfile(filename=inp)
-        input_deck = traverse(input_file)
+        input_files = []
+        input_deck = traverse(input_file, input_files)
+
+        for i in input_files:
+            print("Adding input file to job: " + str(i.file))
+        print()
 
         # Visualize missing files
         for i in input_deck:

@@ -22,6 +22,8 @@ def children(infile):
         if not Path(infile.file).is_file():
             print("Not found: " + str(infile.file), file=sys.stderr)
             return []
+        else:
+            print("Reading input file %s..." % str(infile.file))
 
         # Set defaults for the attributes
         infile.restart_read = False
