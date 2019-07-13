@@ -7,11 +7,20 @@ slurm:
 abaqus:
   # default template
   solve_template: 'abaqus-solve-template.j2'
-  solve_parallel_template: 'abaqus-solve-parallel-template.j2'
+  solve_distributed_template: 'abaqus-solve-distributed-template.j2'
+  solve_eigenfrequency_template: 'abaqus-solve-eigenfreqency-template.j2'
   # Populated modules list
   envmodules:
     - 'abaqus/2018-2'
     - 'abaqus/2019-G'
+  masternode_mem:
+    - '384'
+    - '768'
+    - '1536'
+  masternode_mem_default:
+    - '768'
+  workernode_mem_default:
+    - '384'
 
 femfat:
   template: 'femfat_slurm.j2'

@@ -21,24 +21,11 @@
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
 # Exclusive execution on head node
 #SBATCH --exclusive
-{% if job.nodes > 1 %}
-##  Jobpack 2
-# Job-pack for heterogeneous jobs
-#SBATCH packjob
-# Remaining nodes are worker nodes
-#SBATCH -N {{ job.nodes - 1 }}
-{% if job.workernode_mem %}
-# Memory requirement on worker node(s)
-#SBATCH --mem={{job.workernode_mem}}
-{% endif %}
-# Exclusive execution on worker node
-#SBATCH --exclusive
-{% endif %}
 
 # Import required python modules
 import os
 import sys
-import re
+import re 
 import subprocess
 import glob
 import shutil
@@ -47,7 +34,7 @@ import json
 from pathlib import Path
 
 # Project is the name of the script and template
-PROJECT = "abaqus-solve-distributed"
+PROJECT = "abaqus-solve-eigenfreqency"
 
 # Get job information from SLURM
 JOB_NAME = os.getenv('SLURM_JOB_NAME')
@@ -60,27 +47,18 @@ STARTDIR = os.getenv('SLURM_SUBMIT_DIR')
 if "SLURM_GTIDS" in os.environ:
     del os.environ['SLURM_GTIDS']
 
+
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = 6
-if 'SLURM_PACK_SIZE' in os.environ:
-    for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
-        cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
-        m = re.match('(\d*)', cpus_per_node)
-        if m:
-            cpus_per_node = m.group(0)
-        else:
-            sys.exit('ERROR: Number of CPUs per node could not be determined!')
+HOST_SPLIT = 1
 
-        for host_name in os.environ['SLURM_JOB_NODELIST_PACK_GROUP_%s' % pack].split(','):
-            LSB_MCPU_HOSTS += "%s %s " % (host_name, cpus_per_node)
-            cpus += int(cpus_per_node)
+if 'SLURM_PACK_SIZE' in os.environ:
+    sys.exit(f' ERROR: Abaqus Eigenfreqency jobs may not be distributed on several nodes, exiting!')
 else:
     for host in os.getenv('SLURM_JOB_NODELIST').split(','):
         LSB_MCPU_HOSTS += "%s %s " % (host, os.getenv('SLURM_CPUS_ON_NODE'))
         cpus += int(os.getenv('SLURM_CPUS_ON_NODE'))
-
 
 try:
     # Create scratch folder
@@ -124,6 +102,9 @@ try:
                   'interactive',
 {% if job.restartjobname %}
                   f'oldjob={{job.restartjobname}}',
+{% endif %}
+{% if job.gpus %}
+                  f'gpus=1',
 {% endif %}
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
@@ -181,3 +162,4 @@ finally:
             scratchlink.unlink()
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
+

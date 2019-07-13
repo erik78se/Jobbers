@@ -1,22 +1,20 @@
 #!/bin/python3
 ## Generic information
 # Job name
-#SBATCH -J {{job.jobname}}
+#SBATCH -J {{job.generic_resources.jobname}}
 # Job time limit in minutes
-#SBATCH -t {{job.timelimit}}
-# TODO: Name of account (not user) for accounting.
-#SBATCH -A abaqus
-# TODO: VERIFY! an email is send at the start and end
+#SBATCH -t {{job.generic_resources.timelimit}}
+# User name
+#SBATCH -A {{user_name}}
+# Sed status mail to user at start and end
 #SBATCH --mail-type=ALL
-# which partitions to consider
-#SBATCH --partition {{job.partitions|join(",")}}
+# List of partitions available for submission
+#SBATCH --partition {{job.generic_resources.partitions|join(",")}}
 ##  Jobpack 1
 # Nodes to use - always one master node
 #SBATCH -N 1
-{% if job.masternode_mem %}
-# Memory requirement on master node
-#SBATCH --mem={{job.masternode_mem}}
-{% endif %}
+# Memory requirement on master node(cluster config?)
+#SBATCH --mem=700G
 # Licenses required, appointed to master job
 #SBATCH --lic {{job.abaqus_licenses.license}}:{{job.abaqus_licenses.volume}}
 # Exclusive execution on head node
@@ -27,10 +25,8 @@
 #SBATCH packjob
 # Remaining nodes are worker nodes
 #SBATCH -N {{ job.nodes - 1 }}
-{% if job.workernode_mem %}
-# Memory requirement on worker node(s)
-#SBATCH --mem={{job.workernode_mem}}
-{% endif %}
+# Memory requirement on worker nodes(clusterconfig?)
+#SBATCH --mem=300G
 # Exclusive execution on worker node
 #SBATCH --exclusive
 {% endif %}
@@ -42,12 +38,10 @@ import re
 import subprocess
 import glob
 import shutil
-import pwd
 import json
-from pathlib import Path
 
-# Project is the name of the script and template
-PROJECT = "abaqus-solve-distributed"
+
+PROJECT = "abaqus-analisys"                 # Project is the name of the script
 
 # Get job information from SLURM
 JOB_NAME = os.getenv('SLURM_JOB_NAME')
@@ -63,7 +57,7 @@ if "SLURM_GTIDS" in os.environ:
 # Get compute hosts and total number of CPUs
 LSB_MCPU_HOSTS = ''
 cpus = 0
-HOST_SPLIT = 6
+HOST_SPLIT = {{job.host_split}}
 if 'SLURM_PACK_SIZE' in os.environ:
     for pack in range(0, int(os.environ['SLURM_PACK_SIZE'])):
         cpus_per_node = os.environ['SLURM_JOB_CPUS_PER_NODE_PACK_GROUP_%s' % pack]
@@ -90,12 +84,9 @@ try:
     except OSError:
         sys.exit(f'ERROR: Local scratch folder could not be created:\n\t{local_scratch_folder}')
 
-    linksrc = f'/net/{HOSTNAME}{local_scratch_folder}'
-    scratchlink = Path(f'{JOB_NAME}_{JOB_ID}')
-    scratchlink.symlink_to(linksrc)
-
     # Stage required files to local scratch
-    files_to_stage_up = {{job.inpfile.files_to_stage()}}
+    files_to_stage_up = {{job.inputfile.files_to_stage()}}
+
     try:
         for stage_up_file in files_to_stage_up:
             for source_file in glob.glob("%s" % stage_up_file):
@@ -118,13 +109,11 @@ try:
         module_env = json.loads(module_out)
 
     # Assemble command line
-    abaqus_cmd = ['ABQLauncher',
+    abaqus_cmd = ["ABQLauncher",
                   f'job={JOB_NAME}',
-                  f'input={os.path.basename("{{job.inpfile.file}}")}',
-                  'interactive',
-{% if job.restartjobname %}
-                  f'oldjob={{job.restartjobname}}',
-{% endif %}
+                  "input={{job.inputfile}}",
+                  "interactive",
+                  f'oldjob={{job.old_job_name}}',
                   f'cpus={str(cpus)}',
                   f'mp_host_split={str(HOST_SPLIT)}']
 
@@ -139,26 +128,22 @@ try:
     # Launch application
     # TODO: Encapsulate process in processManager
     print(*abaqus_cmd, sep=" ")
-    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=module_env, stdout=subprocess.PIPE)
-    (abaqus_out, abaqus_err) = abaqus_process.communicate()
+    abaqus_process = subprocess.Popen(abaqus_cmd, shell=False, cwd=local_scratch_folder, env=os.module_env, stdout=subprocess.PIPE)
+    (module_out, module_err) = abaqus_process.communicate()
     abaqus_exit_status = abaqus_process.wait()
 
     if abaqus_exit_status == 0:
         print("Abaqus was run successfully")
         exit_status = "Done"
     else:
-        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {abaqus_out}\nstderr: {abaqus_err}')
+        print(f'Abaqus exited with ERROR CODE {str(abaqus_exit_status)}\nstdout: {module_out}\nstderr: {module_err}')
         exit_status = "Exited"
 
     # Stage back result files files to local scratch
-    files_to_stage_back = []
-{%- if job.inpfile.restart_write %}
-    for f in filter(re.compile(r'^%s.[a-z]{3}$' % JOB_NAME).match, \
-{%- else %}
-    for f in filter(re.compile(r'^%s.(pre|dat|msg|sta|use|odb|sim|fil|prt|err)$' % JOB_NAME).match, \
-{%- endif %}
-    os.listdir(local_scratch_folder)):
-        files_to_stage_back.append(f'{local_scratch_folder}/{f}')
+    files_to_stage_back = [
+        {{job.outputfiles}}
+    ]
+    files_to_stage_back = glob.glob(f'{os.path.join(local_scratch_folder,JOB_NAME + ".*")}')
     try:
         print(f'Staging back:')
         for stage_back_file in files_to_stage_back:
@@ -166,7 +151,7 @@ try:
             target_file = os.path.join(STARTDIR, os.path.basename(stage_back_file))
             shutil.copy(stage_back_file, target_file)
             # TODO: Check what this line actually does
-            # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410)
+            # os.chown(target_file, pwd.getpwnam(USER).pw_uid, 2410
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Stage back failed: \n\t Source: {source_file} \n\t Target: {target_file} \n\t Problem: {str(why)}')
 
@@ -176,8 +161,5 @@ finally:
     try:
         if os.path.exists(local_scratch_folder):
             shutil.rmtree(local_scratch_folder)
-        # Remove the scratchlink
-        if os.path.islink(scratchlink):
-            scratchlink.unlink()
     except (IOError, os.error) as why:
         sys.exit(f' ERROR: Cleanup failed on compute host, remove files manually:\n\t Problem: {str(why)}')
