@@ -1,11 +1,12 @@
 class FemfatJob:
     """ Model for a abaqus Job for solver """
+
     def __init__(self, ffjfile=None):
         self.jobname = None
         self.ffjfile = ffjfile
         self.template = None
         self.timelimit = ""
-        self.scratch = '/tmp'
+        self.scratch = "/tmp"
         self.memory = None
         self.femfat_licenses = {}
         self.femfat_module = {}
