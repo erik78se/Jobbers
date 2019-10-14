@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
-from jobbers.abaqus.model import Inpfile
 import sys
+from jobbers.abaqus.model import Inpfile
 
 # Module wide regular expressions used to find content in .inp files
 input_regexp = re.compile(r'^\s*\*\w.*input\s*=\s*([\w\./-]+)\s*$', re.IGNORECASE)
@@ -13,62 +13,62 @@ random_regexp = re.compile(r'^\s\*RANDOM\s*.*RESPONSE', re.IGNORECASE)
 
 
 def children(infile):
-        """
-        Returns a list of all include files in the infile.
-        Iterates over the .inp file to find specific attributes and sets them
-        for the root node (infile).
-        """
-        r = []
-        if not Path(infile.file).is_file():
-            print("Not found: " + str(infile.file), file=sys.stderr)
-            return []
-        else:
-            print("Reading input file %s..." % str(infile.file))
+    """
+    Returns a list of all include files in the infile.
+    Iterates over the .inp file to find specific attributes and sets them
+    for the root node (infile).
+    """
+    r = []
+    if not Path(infile.file).is_file():
+        print("Not found: " + str(infile.file), file=sys.stderr)
+        return []
+    else:
+        print("Reading input file %s..." % str(infile.file))
 
-        # Set defaults for the attributes
-        infile.restart_read = False
-        infile.restart_write = False
-        infile.random_response = False
-        infile.eigenfrequency = False
-        
-        # Scan for items we need
-        # TODO: Performance!
-        # In Python 3.5 and 3.6, pathlib stuff (infile.file) must be converted to string
-        with open(str(infile.file), 'rb') as fh:
-            for line in fh:
-                line = line.decode(errors='replace').strip()
+    # Set defaults for the attributes
+    infile.restart_read = False
+    infile.restart_write = False
+    infile.random_response = False
+    infile.eigenfrequency = False
 
-                if '*' in line and not '**' in line:      # Run a cheep operations to limit re calls
-                    otherfile = file_regexp.search(line)
-                    include = input_regexp.search(line)
-                    restartr = restart_read_regexp.search(line)
-                    restartw = restart_write_regexp.search(line)
-                    eigen = eigen_regexp.search(line)
-                    random = random_regexp.search(line)
+    # Scan for items we need
+    # TODO: Performance!
+    # In Python 3.5 and 3.6, pathlib stuff (infile.file) must be converted to string
+    with open(str(infile.file), 'rb') as fh:
+        for line in fh:
+            line = line.decode(errors='replace').strip()
 
-                    if include:
-                        c = include.group(1).strip()
-                        child = Inpfile(filename=c)
-                        infile.input_files.append(child)
-                        r.append(child)
+            if '*' in line and '**' not in line:      # Run a cheep operations to limit re calls
+                otherfile = file_regexp.search(line)
+                include = input_regexp.search(line)
+                restartr = restart_read_regexp.search(line)
+                restartw = restart_write_regexp.search(line)
+                eigen = eigen_regexp.search(line)
+                random = random_regexp.search(line)
 
-                    if otherfile:
-                        o = include.group(1).strip()
-                        infile.input_files.append(o)
+                if include:
+                    c = include.group(1).strip()
+                    child = Inpfile(filename=c)
+                    infile.input_files.append(child)
+                    r.append(child)
 
-                    if restartr:
-                        infile.restart_read = True
+                if otherfile:
+                    o = include.group(1).strip()
+                    infile.input_files.append(o)
 
-                    if restartw:
-                        infile.restart_write = True
+                if restartr:
+                    infile.restart_read = True
 
-                    if eigen:
-                        infile.eigenfrequency = True
+                if restartw:
+                    infile.restart_write = True
 
-                    if random:
-                        infile.random_response = True
-                
-        return r
+                if eigen:
+                    infile.eigenfrequency = True
+
+                if random:
+                    infile.random_response = True
+
+    return r
 
 
 def traverse(infile, inp_result=[]):

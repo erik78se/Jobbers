@@ -5,9 +5,9 @@ import os
 
 class SolveJob:
     """ Model for a abaqus Job for solver """
-    def __init__(self,inp=None):
+    def __init__(self, inp=None):
         self.jobname = None
-        #self.inpfili = Inpfile(filename=str(inp.file))  # Inputfile for this job
+        # self.inpfili = Inpfile(filename=str(inp.file))  # Inputfile for this job
         # TODO: Reflect - should not reconstruct the inputfile, right?!
         self.inpfile = inp  # Inputfile for this job
         self.template = None
@@ -26,7 +26,7 @@ class SolveJob:
 
 class GenericJob:
     """ Model for a generic job """
-    def __init__(self):
+    def __init__(self, inp=None):
         self.jobname = None
         self.inpfile = inp  # Inputfile for this job
         self.template = None
@@ -80,7 +80,7 @@ class Inpfile:
         # Append include files
         for file in self.input_files:
             # TODO: the input_files are also Inpfiles. should really abspath be done here?
-            #files_to_stage_up.append(os.path.abspath(str(file.file)))
+            # files_to_stage_up.append(os.path.abspath(str(file.file)))
             files_to_stage_up.extend(file.files_to_stage())
 
         # Append other files
