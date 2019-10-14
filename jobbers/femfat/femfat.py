@@ -15,11 +15,6 @@ def process():
     based on questions from inquirer
     as a string to stdout """
 
-    try:
-        cluster_scratch_root
-    except NameError:
-        cluster_scratch_root = '/cluster/scratch'
-
     # Templates relative to the package
     templates_dir = path.join(path.dirname(jobbers.femfat.__file__), 'templates')
     template_files = glob.glob(os.path.join(templates_dir, 'femfat_*.j2'))
