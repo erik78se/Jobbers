@@ -101,8 +101,6 @@ def _workflow_solve(template, inpfile, output):
 
     solvejob.cpus = ask_cpus_int()['cpus']
 
-    lics_needed = calculate_abaqus_licenses(solvejob.cpus)
-
     solvejob.abaqus_licenses = ask_abaqus_licenses()
 
     solvejob.partitions = ask_partitions()['partitions']
