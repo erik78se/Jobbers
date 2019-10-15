@@ -1,8 +1,7 @@
-import os
 import pathlib
-from jobbers import config
 import inquirer  # https://pypi.org/project/inquirer/
 import confuse
+from jobbers import config
 
 
 def _list_inputfiles(path=None):
@@ -54,7 +53,7 @@ def ask_memory():
                       message="Max Memory needed (GB)",
                       validate=lambda _, x: 0 <= int(x) <= 1500,
                       default='256'),
-        ]
+    ]
 
     return inquirer.prompt(questions)
 
@@ -96,7 +95,7 @@ def ask_timelimit():
                       choices=[1, 2, 3, 4, 5, 6, 7, 8, 12, 24, 48, 72, 96, 144],
                       default=3,),
     ]
-    
+
     return inquirer.prompt(questions)
 
 
@@ -113,13 +112,13 @@ def ask_partitions():
 
 def ask_cpus_int():
     """ Returns a dict with the answers for questions about cpu """
-    
+
     questions = [
         inquirer.List('cpus',
                       message="Needed cpus",
                       choices=[1, 2, 4, 8, 16, 32, 64],),
     ]
-    
+
     return inquirer.prompt(questions)
 
 
@@ -128,8 +127,8 @@ def ask_gpus_bool():
 
     questions = [
         inquirer.Confirm('gpus',
-                      message="Should GPUs be used?",
-                      default=False),
+                         message="Should GPUs be used?",
+                         default=False),
     ]
 
     return inquirer.prompt(questions)
@@ -137,14 +136,14 @@ def ask_gpus_bool():
 
 def ask_nodes():
     """ Returns a dict with the answers for questions about nodes """
-    
+
     questions = [
         inquirer.List('nodes',
                       message="Max nodes:",
                       choices=[1, 2, 3, 4],
                       default=1),
     ]
-    
+
     return inquirer.prompt(questions)
 
 
@@ -190,15 +189,15 @@ def ask_restart():
     l = _list_restartfiles()
     questions = None
     if not l:
-        questions = [ inquirer.Path('restartfile',
-                        message="Restart file (absolute path)",
-                        path_type=inquirer.Path.FILE,
-                        exists=True), ]
+        questions = [inquirer.Path('restartfile',
+                                   message="Restart file (absolute path)",
+                                   path_type=inquirer.Path.FILE,
+                                   exists=True)]
     else:
-        questions = [ inquirer.List('restartfile',
-                      message=".res file to use (absolute path)",
-                      choices=_list_restartfiles()),
-    ]
+        questions = [inquirer.List('restartfile',
+                                   message=".res file to use (absolute path)",
+                                   choices=_list_restartfiles()),
+                     ]
 
     return inquirer.prompt(questions)
 
@@ -209,8 +208,8 @@ def ask_submodel_odb():
                        message="Path to submodel ODB file (absolute)",
                        path_type=inquirer.Path.FILE,
                        default='submodel.odb',
-                       exists=False), ]
-    
+                       exists=False)]
+
     return inquirer.prompt(q)
 
 
@@ -224,7 +223,7 @@ def ask_abaqus_licenses():
                        message="How many licenses of {license}",
                        validate=lambda _, x: 0 <= int(x) <= 1000,
                        default='30'), ]
-          
+
     return inquirer.prompt(q)
 
 
@@ -239,7 +238,7 @@ def ask_abaqus_licenses_parallel(default_volume):
                        message="How many licenses of {license}",
                        choices=[36, 72, 108],
                        default=72), ]
-          
+
     return inquirer.prompt(q)
 
 
