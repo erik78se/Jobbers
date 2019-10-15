@@ -1,4 +1,4 @@
-import jinja2    # http://jinja.pocoo.org/docs/2.10/
+import jinja2  # http://jinja.pocoo.org/docs/2.10/
 
 
 def render_to_out(job, output):

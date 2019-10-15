@@ -1,18 +1,21 @@
 import os
 import click
 from jobbers.templating import render_to_out
-from jobbers.tensorflow.model import (TensorJob)
+from jobbers.tensorflow.model import TensorJob
 from jobbers.tensorflow.view import *
 import jobbers
 from jobbers import config
 
 
 @click.command()
-@click.argument('output', type=click.File('w'))
-@click.option('-t', '--template',
-              required=False,
-              type=click.Path(exists=True),
-              help="Use custom jinja2 template.")
+@click.argument("output", type=click.File("w"))
+@click.option(
+    "-t",
+    "--template",
+    required=False,
+    type=click.Path(exists=True),
+    help="Use custom jinja2 template.",
+)
 def cli(output, template):
     """Processes questions and writes an script ready for slurm sbatch
 
@@ -38,13 +41,13 @@ def cli(output, template):
     # Start state, which workflow?
     # <Debug> or <Run>
     ###################################
-    wf = ask_workflow()['workflow']
+    wf = ask_workflow()["workflow"]
 
-    if wf == 'run':
+    if wf == "run":
 
         _workflow_run(template, output)
 
-    elif wf == 'debug':
+    elif wf == "debug":
 
         _workflow_debug()
 
@@ -63,24 +66,26 @@ def _workflow_run(template, output):
     # Collect needed resources.
     ##################################
 
-    tensorjob.jobname = ask_jobname()['jobname']
+    tensorjob.jobname = ask_jobname()["jobname"]
 
-    tensorjob.timelimit = 60 * int(ask_timelimit()['timelimit'])
+    tensorjob.timelimit = 60 * int(ask_timelimit()["timelimit"])
 
-    tensorjob.gpus = ask_gpus()['gpus']
+    tensorjob.gpus = ask_gpus()["gpus"]
 
-    tensorjob.partitions = ask_partitions()['partitions']
+    tensorjob.partitions = ask_partitions()["partitions"]
 
     ##########################################
     # Info gathered, dispatch to job rendering
     ##########################################
 
-    templates_dir = os.path.join(os.path.dirname(jobbers.tensorflow.__file__), 'templates')
+    templates_dir = os.path.join(
+        os.path.dirname(jobbers.tensorflow.__file__), "templates"
+    )
 
     if template:
         tensorjob.template = template
     else:
-        tensor_template = config['tensorflow']['template'].get()
+        tensor_template = config["tensorflow"]["template"].get()
         tensorjob.template = "{}/{}".format(templates_dir, tensor_template)
 
     render_to_out(tensorjob, output)
@@ -94,5 +99,5 @@ def _workflow_debug():
     print("exit")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

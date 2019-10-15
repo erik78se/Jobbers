@@ -1,10 +1,11 @@
 class TensorJob:
     """ Model for a abaqus Job for solver """
+
     def __init__(self, ffjfile=None):
         self.jobname = None
         self.template = None
         self.timelimit = ""
-        self.scratch = '/tmp'
+        self.scratch = "/tmp"
         self.memory = None
         self.nodes = None
         self.cpus = None

@@ -4,12 +4,12 @@ import sys
 from jobbers.abaqus.model import Inpfile
 
 # Module wide regular expressions used to find content in .inp files
-input_regexp = re.compile(r'^\s*\*\w.*input\s*=\s*([\w\./-]+)\s*$', re.IGNORECASE)
-file_regexp = re.compile(r'^.*,*\s*FILE\s*=\s*([^,]+).*', re.IGNORECASE)
-restart_read_regexp = re.compile(r'^\s*\*restart\s*.*read', re.IGNORECASE)
-restart_write_regexp = re.compile(r'^\s*\*restart\s*.*write', re.IGNORECASE)
-eigen_regexp = re.compile(r'^\s*\*FREQUENCY\s*', re.IGNORECASE)
-random_regexp = re.compile(r'^\s\*RANDOM\s*.*RESPONSE', re.IGNORECASE)
+input_regexp = re.compile(r"^\s*\*\w.*input\s*=\s*([\w\./-]+)\s*$", re.IGNORECASE)
+file_regexp = re.compile(r"^.*,*\s*FILE\s*=\s*([^,]+).*", re.IGNORECASE)
+restart_read_regexp = re.compile(r"^\s*\*restart\s*.*read", re.IGNORECASE)
+restart_write_regexp = re.compile(r"^\s*\*restart\s*.*write", re.IGNORECASE)
+eigen_regexp = re.compile(r"^\s*\*FREQUENCY\s*", re.IGNORECASE)
+random_regexp = re.compile(r"^\s\*RANDOM\s*.*RESPONSE", re.IGNORECASE)
 
 
 def children(infile):
@@ -34,11 +34,13 @@ def children(infile):
     # Scan for items we need
     # TODO: Performance!
     # In Python 3.5 and 3.6, pathlib stuff (infile.file) must be converted to string
-    with open(str(infile.file), 'rb') as fh:
+    with open(str(infile.file), "rb") as fh:
         for line in fh:
-            line = line.decode(errors='replace').strip()
+            line = line.decode(errors="replace").strip()
 
-            if '*' in line and '**' not in line:      # Run a cheep operations to limit re calls
+            if (
+                "*" in line and "**" not in line
+            ):  # Run a cheep operations to limit re calls
                 otherfile = file_regexp.search(line)
                 include = input_regexp.search(line)
                 restartr = restart_read_regexp.search(line)
